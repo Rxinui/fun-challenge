@@ -1,3 +1,127 @@
+@Rxinui 2025-02-24T00:29:36+01:00
+I wrote all #tests at least unit ones.
+EOF
+
+@Rxinui 2025-02-23T19:24:44+01:00
+i change extract #topic to remove #duplicate from the #start
+EOF
+
+@Rxinui 2025-02-23T05:25:00+01:00
+I did it again but special #heap for #tuple for count-topic
+EOF
+
+@Rxinui 2025-02-23T05:24:38+01:00
+I create a #heap and its methods
+EOF
+
+@Rxinui 2025-02-22T15:01:36+01:00
+anyway, I'm very #happy that #getTrendingTopics is going smooth
+EOF
+
+@Rxinui 2025-02-22T15:00:59+01:00
+I guess the #straightforward way is very important for building #tests
+EOF
+
+@Rxinui 2025-02-22T15:00:34+01:00
+I'm satisfy how smooth it is going with the #datastructure
+EOF
+
+@Rxinui 2025-02-22T03:36:44+01:00
+this #project is #fun honestly. Brings me back to my #university #days
+EOF
+
+@Rxinui 2025-02-22T03:36:22+01:00
+the new #tests weren't fun but everything is #green
+EOF
+
+@Rxinui 2025-02-22T02:38:08+01:00
+i favour #addPost over #getPost!
+EOF
+
+@Rxinui 2025-02-22T02:16:15+01:00
+i get to use #queue and #stack together
+EOF
+
+@Rxinui 2025-02-22T01:10:39+01:00
+I hate myself for the confusion. #max #heap it is. Byebye #stack.
+EOF
+
+@Rxinui 2025-02-21T23:55:13+01:00
+#time #function return #float and #API spec wants #int.
+EOF
+
+@Rxinui 2025-02-21T23:35:05+01:00
+so far so #good, get #posts for #user is working with 1 usecase
+EOF
+
+@Rxinui 2025-02-21T23:08:20+01:00
+usage of sys.getsizeof comes handy for #memory #optimisation
+EOF
+
+@Rxinui 2025-02-21T23:08:00+01:00
+#optimisation: i verified that #float consume less #memory than #int
+EOF
+
+@Rxinui 2025-02-21T23:07:29+01:00
+#optimisation: change #epoch to #time when #Yodelr is init
+EOF
+
+@Rxinui 2025-02-21T23:06:46+01:00
+#optimisation: use a single #index with #composite #keys
+EOF
+
+@Rxinui 2025-02-21T23:06:18+01:00
+It is convenient to #manipulate 2 #indexes, however it is a lot of #overhead
+EOF
+
+@Rxinui 2025-02-21T23:03:41+01:00
+implementing #delete was straightforward, i guess the warmup is over
+EOF
+
+@Rxinui 2025-02-21T22:15:26+01:00
+at least, all #tests are green so far
+EOF
+
+@Rxinui 2025-02-21T22:15:03+01:00
+I will optimise later, next #iteration
+EOF
+
+@Rxinui 2025-02-21T22:14:49+01:00
+Along the way, i came up with #optimisation in my head. But let's keep it simple
+EOF
+
+@Rxinui 2025-02-21T21:17:32+01:00
+well, my #concern was not necessary
+EOF
+
+@chatgpt 2025-02-21T21:17:12+01:00
+.values() .keys() and .items() return a dynamic view with O(1)
+EOF
+
+@Rxinui 2025-02-21T21:16:37+01:00
+that will speed up the getters O(1) but im concern about its methods .values
+EOF
+
+@Rxinui 2025-02-21T21:16:11+01:00
+I want to use a dict as a main implementation to create an index
+EOF
+
+@Rxinui 2025-02-21T01:52:24+01:00
+TDD slows the dev but ensure the quality of the code
+EOF
+
+@deepseek 2025-02-20T23:40:08+01:00
+"increment monotonically," it means that it increases consistently over time, but the amount of step does not have to be exactly 1.
+EOF
+
+@Rxinui 2025-02-20T23:37:50+01:00
+assumption "#timestamp increase #monotically", meaning #increment as #counter by +1?
+EOF
+
+@Rxinui 2025-02-20T23:37:06+01:00
+the assumptions written in the spec makes the mission easier but tie the choice of data struct to them.
+EOF
+
 @Rxinui 2025-02-20T20:47:19+01:00
 #release #v1 will be the fastest #implementation. #v2 the most #optimal
 EOF

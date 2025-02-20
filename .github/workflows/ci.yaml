@@ -1,0 +1,20 @@
+#description: CI pipeline for Yodelr
+name: ci
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ["ubuntu-latest"]
+    env:
+      IMAGE: rxinui/yodelr
+      APP_ENV: ci
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Update APP_ENV for ci
+        run: sed -i -E "s/^(APP_ENV)=.*/\1=${{env.APP_ENV}}/" .env
+
+      - name: Test Yodelr
+        run: make unittest-in-container tag=${{contains(github.ref_name,'/') && 'alpha' || github.ref_name }}
