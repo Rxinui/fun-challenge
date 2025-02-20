@@ -1,0 +1,50 @@
+#!/bin/bash
+###
+# Author: @Rxinui
+# Scope: INTERNAL USAGE ONLY
+# Pre-requisites: https://github.com/charmbracelet/gum
+#
+# Simple CLI to write and post a micromessage to $BLOG_FILE
+###
+gum 2 &>/dev/null && [ $? -gt 0 ] && exit -1
+export BLOG_FILE="BLOG.md"
+export DEFAULT_AUTHOR="Rxinui"
+
+update_blog() {
+    ###
+    # Append micropost to the $BLOG_FILE in a First-in-Last-out manner
+    ###
+    _msg=$1
+    echo -e "$_msg\n\n$(cat $BLOG_FILE)" >$BLOG_FILE
+}
+
+create_micropost() {
+    ###
+    # Create a standard compliant micropost for $BLOG_FILE
+    # Parameters:
+    #   $1: message body
+    #   $2: author of message
+    ###
+    _msg=$1
+    _author=$2
+    if [ ! $_author ]; then
+        _author=$DEFAULT_AUTHOR
+    fi
+    _date=$(date -Iseconds)
+    echo -e "@${_author} ${_date}\n${_msg}\nEOF"
+}
+
+main() {
+    ###
+    # Main program
+    #
+    # Parameters:
+    #   $1: author of message
+    ###
+    MSG_BODY=$(gum write --placeholder "Message of 140 chars")
+    MICROPOST=$(create_micropost "$MSG_BODY" "$1")
+    update_blog "$MICROPOST"
+    echo -e "New micropost...\n\n${MICROPOST}"
+}
+
+main $@;
