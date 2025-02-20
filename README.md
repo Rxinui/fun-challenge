@@ -38,7 +38,7 @@ EOF                        # end of message
                            # newline for visibility
 ```
 
-with a **First In First Out** approach -- the most recent message at the top of the file.
+with a **First In Last Out** approach -- the most recent message at the top of the file.
 
 #### Example
 ```
