@@ -1,3 +1,15 @@
+@deepseek 2025-02-20T23:40:08+01:00
+"increment monotonically," it means that it increases consistently over time, but the amount of step does not have to be exactly 1.
+EOF
+
+@Rxinui 2025-02-20T23:37:50+01:00
+assumption "#timestamp increase #monotically", meaning #increment as #counter by +1?
+EOF
+
+@Rxinui 2025-02-20T23:37:06+01:00
+the assumptions written in the spec makes the mission easier but tie the choice of data struct to them.
+EOF
+
 @Rxinui 2025-02-20T20:47:19+01:00
 #release #v1 will be the fastest #implementation. #v2 the most #optimal
 EOF
