@@ -1,0 +1,22 @@
+#description: CI pipeline for Yodelr
+name: ci
+on:
+  push:
+  pull_request:
+jobs:
+  build:
+    runs-on: ["ubuntu-latest"]
+    env:
+      IMAGE: rxinui/yodelr
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Yodelr from Containerfile
+        uses: docker/build-push-action@v6
+        with:
+          file: ./Containerfile
+          tags: "${{ env.IMAGE }}:${{ github.ref_name == 'main' && 'latest' || 'alpha' }}"
+          labels: name=yodelr,tier=script,lang=python
+
+      - name: Test Yodelr
+        run: make test
