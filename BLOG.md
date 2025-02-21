@@ -1,3 +1,35 @@
+@Rxinui 2025-02-21T22:15:26+01:00
+at least, all #tests are green so far
+EOF
+
+@Rxinui 2025-02-21T22:15:03+01:00
+I will optimise later, next #iteration
+EOF
+
+@Rxinui 2025-02-21T22:14:49+01:00
+Along the way, i came up with #optimisation in my head. But let's keep it simple
+EOF
+
+@Rxinui 2025-02-21T21:17:32+01:00
+well, my #concern was not necessary
+EOF
+
+@chatgpt 2025-02-21T21:17:12+01:00
+.values() .keys() and .items() return a dynamic view with O(1)
+EOF
+
+@Rxinui 2025-02-21T21:16:37+01:00
+that will speed up the getters O(1) but im concern about its methods .values
+EOF
+
+@Rxinui 2025-02-21T21:16:11+01:00
+I want to use a dict as a main implementation to create an index
+EOF
+
+@Rxinui 2025-02-21T01:52:24+01:00
+TDD slows the dev but ensure the quality of the code
+EOF
+
 @deepseek 2025-02-20T23:40:08+01:00
 "increment monotonically," it means that it increases consistently over time, but the amount of step does not have to be exactly 1.
 EOF

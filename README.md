@@ -74,7 +74,7 @@ On that basis, it seems to be interesting to start with a `v1` that uses a linea
 In less than 2 hours, create `v1`:
 
 1. Design an optimal linear data structure to implement Yodler API
-2. Proceed with the joint implementation of tests and features using Test-Driven Development (TDD)
+2. Proceed with the joint implementation of tests and features
 3. Confirm the test coverage of the Yodler API `v1`
 
 By 24.02.2025, create `v2` which uses a non-linear data structure:

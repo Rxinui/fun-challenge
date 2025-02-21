@@ -1,6 +1,6 @@
 import pytest
 import v1
-import datetime
+import time
 from yodelr import Yodelr
 
 
@@ -16,5 +16,5 @@ def test_add_user(yodelr: Yodelr, username: str):
 
 def test_add_post(yodelr: Yodelr, username):
     post_text = "My very #first #test post."
-    yodelr.add_post(username, post_text, datetime.time())
+    yodelr.add_post(username, post_text, str(int(time.time())))
     assert yodelr._is_post_in_system(username, post_text)

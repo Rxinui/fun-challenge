@@ -1,7 +1,7 @@
 from typing import List
 
 
-class StackWrapper[T: (str, int)]:
+class StackWrapper[T]:
 
     @staticmethod
     def add(stack: List[T], e: T) -> None:
