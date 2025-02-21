@@ -58,4 +58,23 @@ class YodelrV1(yodelr.Yodelr):
         self.__topics_by_timestamp: dict[Topic, Stack[Timestamp]] = dict()
         self.__history: list[Timestamp] = list()
 
-    
+    def _is_user_in_system(self, user: User) -> bool:
+        """[For test only]
+
+        Args:
+            user (User): _description_
+
+        Returns:
+            bool: _description_
+        """
+        return user in self.__posts_by_user
+
+    def add_user(self, user_name: str) -> None:
+        """Add user to the system.
+
+        Insert username within index:posts_by_user
+
+        Args:
+            user_name (str): username
+        """
+        return
