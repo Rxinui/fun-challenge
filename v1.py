@@ -1,3 +1,4 @@
+from typing import List
 import yodelr
 
 
@@ -54,7 +55,7 @@ class YodelrV1(yodelr.Yodelr):
         """
         super().__init__()
         self.__posts_by_topic: dict[Topic, Stack[Post]] = dict()
-        self.__posts_by_user: dict[User, Stack[Post]] = dict()
+        self.__posts_by_user: dict[User, Stack[Post] | None] = dict()
         self.__topics_by_timestamp: dict[Topic, Stack[Timestamp]] = dict()
         self.__history: list[Timestamp] = list()
 
@@ -77,4 +78,19 @@ class YodelrV1(yodelr.Yodelr):
         Args:
             user_name (str): username
         """
-        return
+        self.__posts_by_user[user_name] = None
+
+    def add_post(self, user_name: str, post_text: str, timestamp: int) -> None:
+        pass
+
+    def delete_user(self, user_name: str) -> None:
+        pass
+
+    def get_posts_for_user(self, user_name: str) -> List[str]:
+        pass
+
+    def get_posts_for_topic(self, topic: str) -> List[str]:
+        pass
+
+    def get_trending_topics(self, from_timestamp: int, to_timestamp: int) -> List[str]:
+        pass
