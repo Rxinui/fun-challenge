@@ -2,5 +2,5 @@ import pytest
 
 
 @pytest.fixture(scope="module")
-def username() -> str:
+def user_name() -> str:
     return "Rxinui"

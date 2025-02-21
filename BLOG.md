@@ -1,3 +1,7 @@
+@Rxinui 2025-02-21T23:03:41+01:00
+implementing #delete was straightforward, i guess the warmup is over
+EOF
+
 @Rxinui 2025-02-21T22:15:26+01:00
 at least, all #tests are green so far
 EOF
