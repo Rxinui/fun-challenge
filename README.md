@@ -1,6 +1,10 @@
 # README
 
-:warning: *PLEASE DO READ ME ENTIRELY, IT IS VERY IMPORTANT.* :warning:
+Main: ![test-coverage:main](https://github.com/Rxinui/fun-challenge/actions/workflows/ci.yaml/badge.svg?branch=main)
+
+Latest commit pushed: ![test-coverage:push](https://github.com/Rxinui/fun-challenge/actions/workflows/ci.yaml/badge.svg?event=push)
+
+:warning: _PLEASE DO READ ME ENTIRELY, IT IS VERY IMPORTANT._ :warning:
 
 author: @Rxinui
 
@@ -14,7 +18,7 @@ The structure of this repository lists the following
 - BLOG.md: microblog file containing my thoughts at a given time
 - tests/**/: tests files and datasets samples
 - docs/: directory containing complementary docs and figures
-- .github/**/: CI/CD workflows 
+- .github/**/: CI/CD workflows
 ```
 
 Coincidentally, `yodelr.py` is about micro-message communications platform. As a result, it would be cool to use `BLOG.md` as a real-world dataset.
@@ -63,9 +67,10 @@ The Yodelr system induces 2 big challenges:
 1. How to structure the data to implement getters in reasonable time (equal or less than `O(N)`)
 2. Which of the operation should be more expensive between **write**, **read** or **delete** (inherent to the data structure chosen)
 
-There are two types of data structures: **linear** and **non-linear**, where the latter is generally more performant at a cost of higher *Time To Market* and more complex implementation.
+There are two types of data structures: **linear** and **non-linear**, where the latter is generally more performant at a cost of higher _Time To Market_ and more complex implementation.
 
 On that basis, it seems to be interesting to start with a `v1` that uses a linear data structure to:
+
 - Speed up the implementation of the Yodelr API to identify potential issues and edge cases
 - Populate testings with the first prototype. In fact, since the API interface is immutable as a rule, the unit and performance testings once written for `v1` won't change for future releases.
 
@@ -81,7 +86,7 @@ By 24.02.2025, create `v2` which uses a non-linear data structure:
 
 1. Design an optimal non-linear data structure to implement Yodler API and outperform `v1`
 2. Proceed with to the implementation of helpers function that manages the data structure
-3. Implement the Yodler API functions 
+3. Implement the Yodler API functions
 4. Confirm the test coverage of the Yodler API `v2`
 
 By the deadline, if my schedule allows it, create a `v3` which uses advanced algorithm to perform better than `v2`
