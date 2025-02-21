@@ -1,3 +1,31 @@
+@Rxinui 2025-02-21T23:55:13+01:00
+#time #function return #float and #API spec wants #int.
+EOF
+
+@Rxinui 2025-02-21T23:35:05+01:00
+so far so #good, get #posts for #user is working with 1 usecase
+EOF
+
+@Rxinui 2025-02-21T23:08:20+01:00
+usage of sys.getsizeof comes handy for #memory #optimisation
+EOF
+
+@Rxinui 2025-02-21T23:08:00+01:00
+#optimisation: i verified that #float consume less #memory than #int
+EOF
+
+@Rxinui 2025-02-21T23:07:29+01:00
+#optimisation: change #epoch to #time when #Yodelr is init
+EOF
+
+@Rxinui 2025-02-21T23:06:46+01:00
+#optimisation: use a single #index with #composite #keys
+EOF
+
+@Rxinui 2025-02-21T23:06:18+01:00
+It is convenient to #manipulate 2 #indexes, however it is a lot of #overhead
+EOF
+
 @Rxinui 2025-02-21T23:03:41+01:00
 implementing #delete was straightforward, i guess the warmup is over
 EOF

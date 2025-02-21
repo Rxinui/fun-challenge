@@ -68,6 +68,7 @@ class YodelrV1(yodelr.Yodelr):
             timestamp (int): _description_
         """
         logger.info("Add post...")
+        timestamp = int(timestamp)
         logger.debug(
             "associate timestamp '%s' of the post to user '%s'", timestamp, user_name
         )
@@ -102,7 +103,7 @@ class YodelrV1(yodelr.Yodelr):
         timestamps = self.__timestamps_by_user.get(user_name, None)
         logger.debug("Timestamps from user '%s': %s", user_name, timestamps)
         if timestamps is None:
-            # Raise exception UserNotRegistedError
+            # Raise exception UserNotRegisteredError
             return
         logger.debug("Delete user '%s' from Index(user,timestamps)", user_name)
         del self.__timestamps_by_user[user_name]
@@ -110,7 +111,35 @@ class YodelrV1(yodelr.Yodelr):
             del self.__data_by_timestamp[timestamp]
 
     def get_posts_for_user(self, user_name: str) -> List[str]:
-        pass
+        """Get list of post from a user
+
+        Args:
+            user_name (str): user
+
+        Algorithm:
+            Initialise an empty Stack for posts
+            Fetch timestamps in Index(user,timestamps)
+            For-each $timestamp in $timestamps
+                Get $post using $timestamp in Index(timestamp,DATA)
+                Add $post on top of the Stack $posts
+            Return the Stack $posts
+
+        Returns:
+            List[str]: posts
+        """
+        logger.info("Get posts for user '%s'...", user_name)
+        posts: Stack = []
+        timestamps = self.__timestamps_by_user.get(user_name, None)
+        logger.debug("Timestamps=%s", timestamps)
+        if timestamps is None:
+            # raise exception UserNotRegisteredError
+            return
+        for timestamp in timestamps:
+            post = self.__data_by_timestamp[timestamp][self.ID_POST]
+            StackWrapper.add(posts, post)
+            logger.debug("post '%s' added to stack=%s", post, posts)
+        logger.debug("updated Yodelr: %s", self)
+        return posts
 
     def get_posts_for_topic(self, topic: str) -> List[str]:
         pass
@@ -165,4 +194,4 @@ class YodelrV1(yodelr.Yodelr):
         return topics
 
     def __repr__(self) -> str:
-        return f"Index(user,timestamp): {json.dumps(self.__timestamps_by_user)}"
+        return f"Index(user,timestamp): {json.dumps(self.__timestamps_by_user)}\nIndex(timestamp,DATA): {json.dumps(self.__data_by_timestamp)}"
