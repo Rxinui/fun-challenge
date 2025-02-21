@@ -1,11 +1,18 @@
-from typing import List
 import yodelr
-
+import logging
+import os
+from typing import List
+from datastruct import StackWrapper
 
 type Timestamp = int
 type Topic = str
 type User = str
 type Stack = list
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(
+    format="[%(asctime)s] %(message)s", level=os.getenv("LOG_LEVEL") or logging.DEBUG
+)
 
 
 class Post:
@@ -55,7 +62,7 @@ class YodelrV1(yodelr.Yodelr):
         """
         super().__init__()
         self.__posts_by_topic: dict[Topic, Stack[Post]] = dict()
-        self.__posts_by_user: dict[User, Stack[Post] | None] = dict()
+        self.__posts_by_user: dict[User, Stack[Post]] = dict()
         self.__topics_by_timestamp: dict[Topic, Stack[Timestamp]] = dict()
         self.__history: list[Timestamp] = list()
 
@@ -70,6 +77,17 @@ class YodelrV1(yodelr.Yodelr):
         """
         return user in self.__posts_by_user
 
+    def _is_post_in_system(self, user: User, post_text: str) -> bool:
+        """[For test only]
+
+        Args:
+            user (User): _description_
+
+        Returns:
+            bool: _description_
+        """
+        return post_text in [p.message for p in self.__posts_by_user[user]]
+
     def add_user(self, user_name: str) -> None:
         """Add user to the system.
 
@@ -78,9 +96,18 @@ class YodelrV1(yodelr.Yodelr):
         Args:
             user_name (str): username
         """
-        self.__posts_by_user[user_name] = None
+        logger.debug("Adding user %s ...", user_name)
+        self.__posts_by_user[user_name] = []
 
     def add_post(self, user_name: str, post_text: str, timestamp: int) -> None:
+        """Add post to system
+
+
+        Args:
+            user_name (str): _description_
+            post_text (str): _description_
+            timestamp (int): _description_
+        """
         pass
 
     def delete_user(self, user_name: str) -> None:
