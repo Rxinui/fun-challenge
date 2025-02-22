@@ -1,88 +1,118 @@
-from abc import ABC
+from abc import ABC, abstractmethod, abstractstaticmethod
 from typing import List
 
 
 class DataStructWrapper[T](ABC):
 
-    pass
+    @staticmethod
+    @abstractmethod
+    def add(l: List[T], e: T) -> None:
+        pass
+
+    @staticmethod
+    @abstractmethod
+    def delete(l: List[T]) -> T:
+        pass
+
+    @staticmethod
+    @abstractmethod
+    def top_priority(l: List[T]) -> T:
+        """Return "top_priority" as the most prioritised in the data structure"""
+        pass
 
 
 class StackWrapper[T](DataStructWrapper):
     """Index order
-    0           -> first added (biggest timestamp)
+    0           -> top priority (biggest timestamp)
     len(queue)  -> newest added (smallest timestamp)
     """
 
     # My bad
     @staticmethod
-    def add(stack: List[T], e: T) -> None:
-        """Add element $e at the top of the $stack
+    def add(l: List[T], e: T) -> None:
+        """Add element $e at the top of the stack
 
         Args:
-            stack (List[str]): stack
+            l (List[str]): stack
             e (str): element
         """
-        stack.append(e)
+        l.append(e)
 
     @staticmethod
-    def pop(stack: List[T]) -> T:
+    def delete(l: List[T]) -> T:
         """Remove the top of the stack and return it
 
         Args:
-            stack (List[T]): Stack of element
+            l (List[T]): Stack of element
 
         Returns:
             T: element
         """
-        return stack.pop()
+        return l.pop()
 
     @staticmethod
-    def top(stack: List[T]) -> T:
-        """Return the top of the stack without removing it.
+    def top_priority(l: List[T]) -> T:
+        """Return the latest element added (top_priority) on the stack without removing it
 
         Args:
-            stack (List[T]): Stack of element
+            l (List[T]): Stack of element
 
         Returns:
             T: element
         """
-        return stack[-1]
+        if len(l) == 0:
+            raise IndexError("ERR: no top priority in empty Stack.")
+        return l[0]
 
 
 class QueueWrapper[T](DataStructWrapper):
     """Index order
     0           -> newest added (biggest timestamp)
-    len(queue)  -> first added (smallest timestamp)
+    len(queue)  -> top priority (smallest timestamp)
     """
 
     @staticmethod
-    def add(queue: List[T], e: T) -> None:
+    def add(l: List[T], e: T) -> None:
         """Add element $e in the queue
 
         Args:
-            queue (List[str]): queue
+            l (List[str]): queue
             e (str): element
         """
         # NOTE concatenation o(k+n) ≈ O(n)
         # NOTE concatenation create new list out of two list.. not good
-        if len(queue) > 0:
-            queue.append(queue[-1])
-            i = len(queue) - 2
+        if len(l) > 0:
+            l.append(l[-1])
+            i = len(l) - 2
             while i > 0:
-                queue[i] = queue[i - 1]
+                l[i] = l[i - 1]
                 i -= 1
-            queue[0] = e
+            l[0] = e
         else:
-            queue.append(e)
+            l.append(e)
 
     @staticmethod
-    def first(queue: List[T]) -> T:
-        """Return the first in queue without removing it
+    def delete(l: List[T]) -> T:
+        """Remove the top of the stack and return it
 
         Args:
-            queue (List[T]): queue of element
+            l (List[T]): Stack of element
 
         Returns:
             T: element
         """
-        return queue[-1]
+        return None
+
+    @staticmethod
+    def top_priority(l: List[T]) -> T:
+        """Return the first arrived (top_priority) in queue without removing it
+
+        Args:
+            l (List[T]): queue of element
+
+        Returns:
+            T: element
+        """
+        if len(l) == 0:
+            raise IndexError("ERR: no top priority in empty Queue.")
+        return l[-1]

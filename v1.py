@@ -96,7 +96,13 @@ class YodelrV1(yodelr.Yodelr):
         # Indexation of Topic->Timestamps
         for topic in topics:
             topic_timestamps = self.__timestamps_by_topic.setdefault(topic, [])
-            self.__WrapperOnAdd.add(topic_timestamps, timestamp)
+            # Keep duplicate timestamp away
+            if (
+                len(topic_timestamps) > 0
+                and self.__WrapperOnAdd.top_priority(topic_timestamps) != timestamp
+            ) or len(topic_timestamps) == 0:
+                self.__WrapperOnAdd.add(topic_timestamps, timestamp)
+
         # Indexation of User->Timestamps
         user_timestamps = self.__timestamps_by_user.setdefault(user_name, [])
         self.__WrapperOnAdd.add(user_timestamps, timestamp)
@@ -184,12 +190,9 @@ class YodelrV1(yodelr.Yodelr):
         if timestamps is None:
             # raise an Exception
             return posts
-        ts_duplicate = -1  # No timestamp can be negative
         for timestamp in timestamps:
-            if ts_duplicate != timestamp:
-                post = self.__data_by_timestamp[timestamp][self.ID_POST]
-                self.__WrapperOnGet.add(posts, post)
-            ts_duplicate = timestamp
+            post = self.__data_by_timestamp[timestamp][self.ID_POST]
+            self.__WrapperOnGet.add(posts, post)
         return posts
 
     def get_trending_topics(self, from_timestamp: int, to_timestamp: int) -> List[str]:
