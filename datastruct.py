@@ -23,14 +23,14 @@ class DataStructWrapper[T](ABC):
 
 class StackWrapper[T](DataStructWrapper):
     """Index order
-    0           -> top priority (biggest timestamp)
-    len(queue)  -> newest added (smallest timestamp)
+    0           -> top priority
+    len(queue)  -> newest added
     """
 
     # My bad
     @staticmethod
     def add(l: List[T], e: T) -> None:
-        """Add element $e at the top of the stack
+        """Stack $e at the end (top)
 
         Args:
             l (List[str]): stack
@@ -40,7 +40,7 @@ class StackWrapper[T](DataStructWrapper):
 
     @staticmethod
     def delete(l: List[T]) -> T:
-        """Remove the top of the stack and return it
+        """Remove the top priority (LIFO)
 
         Args:
             l (List[T]): Stack of element
@@ -52,7 +52,7 @@ class StackWrapper[T](DataStructWrapper):
 
     @staticmethod
     def top_priority(l: List[T]) -> T:
-        """Return the latest element added (top_priority) on the stack without removing it
+        """LIFO - Return the latest element added (top_priority) on the stack without removing it
 
         Args:
             l (List[T]): Stack of element
@@ -67,13 +67,13 @@ class StackWrapper[T](DataStructWrapper):
 
 class QueueWrapper[T](DataStructWrapper):
     """Index order
-    0           -> newest added (biggest timestamp)
-    len(queue)  -> top priority (smallest timestamp)
+    0           -> newest added
+    len(queue)  -> top priority
     """
 
     @staticmethod
     def add(l: List[T], e: T) -> None:
-        """Add element $e in the queue
+        """Enqueue $e at the beginning
 
         Args:
             l (List[str]): queue
@@ -93,7 +93,7 @@ class QueueWrapper[T](DataStructWrapper):
 
     @staticmethod
     def delete(l: List[T]) -> T:
-        """Remove the top of the stack and return it
+        """Remove the top priority (FIFO)
 
         Args:
             l (List[T]): Stack of element
@@ -105,7 +105,7 @@ class QueueWrapper[T](DataStructWrapper):
 
     @staticmethod
     def top_priority(l: List[T]) -> T:
-        """Return the first arrived (top_priority) in queue without removing it
+        """FIFO - Return the first arrived (top_priority) in queue without removing it
 
         Args:
             l (List[T]): queue of element

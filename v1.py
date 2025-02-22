@@ -86,7 +86,7 @@ class YodelrV1(yodelr.Yodelr):
         logger.debug(
             "> associate timestamp '%s' of the post to user '%s'", timestamp, user_name
         )
-        topics = self._extract_topics(post_text)
+        topics = set(self._extract_topics(post_text))
         # Indexation of Timestamp->{$post, $topics, $user}
         self.__data_by_timestamp[timestamp] = {
             self.ID_POST: post_text,
@@ -246,7 +246,7 @@ class YodelrV1(yodelr.Yodelr):
 
     def __repr__(self) -> str:
         return f"""\r
-        Index(topic,timestamp): {json.dumps(self.__timestamps_by_topic)}
-        Index(user,timestamp): {json.dumps(self.__timestamps_by_user)}
-        Index(timestamp,DATA): {json.dumps(self.__data_by_timestamp)}
+        Index(topic,timestamp): {self.__timestamps_by_topic}
+        Index(user,timestamp): {self.__timestamps_by_user}
+        Index(timestamp,DATA): {self.__data_by_timestamp}
         """

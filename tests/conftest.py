@@ -9,6 +9,18 @@ def user_name() -> str:
 
 @pytest.fixture(scope="module")
 def sample_10_posts() -> list[str]:
+    """
+    Topic   Occurrence in corpus
+    -----   --------------------
+    first   1
+    test    2
+    post    3
+    topic   3
+    full    3
+
+    Returns:
+        list[str]: posts
+    """
     return [
         "My very #first #test post.",
         "Post with odd index has no topic",
