@@ -3,13 +3,14 @@ import yodelr
 import logging
 import re
 from typing import Any, List
-from datastruct import StackWrapper
+from datastruct import QueueWrapper, StackWrapper
 
 type Timestamp = int
 type Topic = str
 type Post = str
 type User = str
-type Stack = list
+type Stack = list  # wrong !
+type Queue = list
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -36,9 +37,9 @@ class YodelrV1(yodelr.Yodelr):
         In addition, we keep track of a monotonically history
         """
         super().__init__()
-
         self.__data_by_timestamp: dict[Timestamp, dict[str, Any]] = dict()
-        self.__timestamps_by_user: dict[User, Stack[Timestamp]] = dict()
+        self.__timestamps_by_user: dict[User, Queue[Timestamp]] = dict()
+        self.__timestamps_by_topic: dict[Topic, Queue[Timestamp]] = dict()
 
     def add_user(self, user_name: str) -> None:
         """Add user to the system.
@@ -70,7 +71,7 @@ class YodelrV1(yodelr.Yodelr):
         logger.info("Add post...")
         timestamp = int(timestamp)
         logger.debug(
-            "associate timestamp '%s' of the post to user '%s'", timestamp, user_name
+            "> associate timestamp '%s' of the post to user '%s'", timestamp, user_name
         )
         topics = self._extract_topics(post_text)
         # Update index Timestamp->{$post, $topics, $user}
@@ -81,8 +82,8 @@ class YodelrV1(yodelr.Yodelr):
         }
         # Update reverse index User->Timestamps
         user_timestamps = self.__timestamps_by_user.setdefault(user_name, [])
-        StackWrapper.add(user_timestamps, timestamp)
-        logger.debug("updated Yodelr: %s", self)
+        QueueWrapper.add(user_timestamps, timestamp)
+        logger.debug("> updated Yodelr: %s", self)
 
     def delete_user(self, user_name: str) -> None:
         """Delete user and all its posts
@@ -101,11 +102,11 @@ class YodelrV1(yodelr.Yodelr):
         """
         logger.info("Deleting user '%s'...", user_name)
         timestamps = self.__timestamps_by_user.get(user_name, None)
-        logger.debug("Timestamps from user '%s': %s", user_name, timestamps)
+        logger.debug("> timestamps from user '%s': %s", user_name, timestamps)
         if timestamps is None:
             # Raise exception UserNotRegisteredError
             return
-        logger.debug("Delete user '%s' from Index(user,timestamps)", user_name)
+        logger.debug("> delete user '%s' from Index(user,timestamps)", user_name)
         del self.__timestamps_by_user[user_name]
         for timestamp in timestamps:
             del self.__data_by_timestamp[timestamp]
@@ -117,32 +118,43 @@ class YodelrV1(yodelr.Yodelr):
             user_name (str): user
 
         Algorithm:
-            Initialise an empty Stack for posts
+            Initialise an empty Queue for posts
             Fetch timestamps in Index(user,timestamps)
             For-each $timestamp in $timestamps
                 Get $post using $timestamp in Index(timestamp,DATA)
-                Add $post on top of the Stack $posts
-            Return the Stack $posts
+                Add $post on top of the Queue $posts
+            Return the Queue $posts
 
         Returns:
-            List[str]: posts
+            List[str]: posts (as stack)
         """
         logger.info("Get posts for user '%s'...", user_name)
-        posts: Stack = []
+        posts: Queue = []
         timestamps = self.__timestamps_by_user.get(user_name, None)
-        logger.debug("Timestamps=%s", timestamps)
+        logger.debug("> timestamps=%s", timestamps)
         if timestamps is None:
             # raise exception UserNotRegisteredError
             return
         for timestamp in timestamps:
             post = self.__data_by_timestamp[timestamp][self.ID_POST]
             StackWrapper.add(posts, post)
-            logger.debug("post '%s' added to stack=%s", post, posts)
-        logger.debug("updated Yodelr: %s", self)
+            logger.debug("> post '%s' added to queue=%s", post, posts)
+        logger.debug("> updated Yodelr: %s", self)
         return posts
 
     def get_posts_for_topic(self, topic: str) -> List[str]:
-        pass
+        """Get all posts of a topic
+
+        Algorithm:
+
+
+        Args:
+            topic (str): _description_
+
+        Returns:
+            List[str]: _description_
+        """
+        return
 
     def get_trending_topics(self, from_timestamp: int, to_timestamp: int) -> List[str]:
         pass

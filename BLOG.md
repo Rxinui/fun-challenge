@@ -1,3 +1,7 @@
+@Rxinui 2025-02-22T01:10:39+01:00
+I hate myself for the confusion. #max #heap it is. Byebye #stack.
+EOF
+
 @Rxinui 2025-02-21T23:55:13+01:00
 #time #function return #float and #API spec wants #int.
 EOF

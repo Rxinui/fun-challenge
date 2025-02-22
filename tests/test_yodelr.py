@@ -63,10 +63,34 @@ def test_get_posts_size_3_for_user(
     user_name: str,
     sample_10_posts: list[str],
 ):
+    """Do not test the order of the element (no sort)"""
     yodelr.add_user("u1")
     yodelr.add_post("u1", sample_10_posts[0], 1)
     yodelr.add_user(user_name)
     yodelr.add_post(user_name, sample_10_posts[1], 10)
     yodelr.add_post(user_name, sample_10_posts[2], 20)
     yodelr.add_post(user_name, sample_10_posts[3], 30)
-    assert yodelr.get_posts_for_user(user_name) == sample_10_posts[1:4]
+    result = yodelr.get_posts_for_user(user_name)
+    assert (
+        result[0] in sample_10_posts[1:4]
+        and result[1] in sample_10_posts[1:4]
+        and result[2] in sample_10_posts[1:4]
+    )
+
+
+def test_get_posts_size_3_is_desc_sorted(
+    yodelr: Yodelr,
+    user_name: str,
+    sample_10_posts: list[str],
+):
+    yodelr.add_user("u1")
+    yodelr.add_post("u1", sample_10_posts[0], 1)
+    yodelr.add_user(user_name)
+    yodelr.add_post(user_name, sample_10_posts[1], 10)
+    yodelr.add_post(user_name, sample_10_posts[2], 20)
+    yodelr.add_post(user_name, sample_10_posts[3], 30)
+    assert yodelr.get_posts_for_user(user_name) == [
+        sample_10_posts[3],
+        sample_10_posts[2],
+        sample_10_posts[1],
+    ]

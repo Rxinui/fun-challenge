@@ -12,3 +12,5 @@ test: clean build
 clean:
 	podman rm -f $(image):$(tag)
 	
+localtest:
+	pytest -s 
