@@ -1,3 +1,11 @@
+@Rxinui 2025-02-22T02:38:08+01:00
+i favour #addPost over #getPost!
+EOF
+
+@Rxinui 2025-02-22T02:16:15+01:00
+i get to use #queue and #stack together
+EOF
+
 @Rxinui 2025-02-22T01:10:39+01:00
 I hate myself for the confusion. #max #heap it is. Byebye #stack.
 EOF

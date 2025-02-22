@@ -26,19 +26,29 @@ class YodelrV1(yodelr.Yodelr):
     def __init__(self):
         """Initialise 3 indexes to modelise YodelrV1
 
+        About Wrapper:
+        - Stack: if chosen as WrapperOnAdd, it optimises performance on addPost and impacts getPost
+        - Queue: if chosen as WrapperOnAdd, it optimises performance on getPost* and impacts addPost
+        - if Stack is chosen as WrapperOnAdd then Queue is taken by WrapperOnGet (vice versa)
+
         Format:
         -------
-
-        $timestamp:
-            $ID_USER:       $user
-            $ID_POST:       $post
-            $ID_TOPICS:     Dict[$topic, int]      # key=$topic, value=occurence
+        data_by_timestamp:
+            $timestamp:
+                $ID_USER:       $user
+                $ID_POST:       $post
+                $ID_TOPICS:     Dict[$topic, int]      # key=$topic, value=occurence
 
         In addition, we keep track of a monotonically history
         """
         super().__init__()
+        self.__WrapperOnAdd = StackWrapper
+        self.__WrapperOnGet = QueueWrapper
         self.__data_by_timestamp: dict[Timestamp, dict[str, Any]] = dict()
         self.__timestamps_by_user: dict[User, Queue[Timestamp]] = dict()
+        # Because of the way I represent timestamps by topic
+        # WrapperOnAdd should be StackWrapper as addPost is costly because
+        # of the indexation of Topic
         self.__timestamps_by_topic: dict[Topic, Queue[Timestamp]] = dict()
 
     def add_user(self, user_name: str) -> None:
@@ -69,20 +79,23 @@ class YodelrV1(yodelr.Yodelr):
             timestamp (int): _description_
         """
         logger.info("Add post...")
-        timestamp = int(timestamp)
         logger.debug(
             "> associate timestamp '%s' of the post to user '%s'", timestamp, user_name
         )
         topics = self._extract_topics(post_text)
-        # Update index Timestamp->{$post, $topics, $user}
+        # Indexation of Timestamp->{$post, $topics, $user}
         self.__data_by_timestamp[timestamp] = {
             self.ID_POST: post_text,
             self.ID_TOPICS: topics,
             self.ID_USER: user_name,
         }
-        # Update reverse index User->Timestamps
+        # Indexation of Topic->Timestamps
+        for topic in topics:
+            topic_timestamps = self.__timestamps_by_topic.setdefault(topic, [])
+            self.__WrapperOnAdd.add(topic_timestamps, timestamp)
+        # Indexation of User->Timestamps
         user_timestamps = self.__timestamps_by_user.setdefault(user_name, [])
-        QueueWrapper.add(user_timestamps, timestamp)
+        self.__WrapperOnAdd.add(user_timestamps, timestamp)
         logger.debug("> updated Yodelr: %s", self)
 
     def delete_user(self, user_name: str) -> None:
@@ -118,18 +131,18 @@ class YodelrV1(yodelr.Yodelr):
             user_name (str): user
 
         Algorithm:
-            Initialise an empty Queue for posts
+            Initialise an empty Stack for posts
             Fetch timestamps in Index(user,timestamps)
             For-each $timestamp in $timestamps
                 Get $post using $timestamp in Index(timestamp,DATA)
-                Add $post on top of the Queue $posts
-            Return the Queue $posts
+                Add $post on top of the Stack $posts
+            Return the Stack $posts
 
         Returns:
             List[str]: posts (as stack)
         """
         logger.info("Get posts for user '%s'...", user_name)
-        posts: Queue = []
+        posts: Stack = []
         timestamps = self.__timestamps_by_user.get(user_name, None)
         logger.debug("> timestamps=%s", timestamps)
         if timestamps is None:
@@ -137,8 +150,8 @@ class YodelrV1(yodelr.Yodelr):
             return
         for timestamp in timestamps:
             post = self.__data_by_timestamp[timestamp][self.ID_POST]
-            StackWrapper.add(posts, post)
-            logger.debug("> post '%s' added to queue=%s", post, posts)
+            self.__WrapperOnGet.add(posts, post)
+            logger.debug("> post '%s' added to its stack=%s", post, posts)
         logger.debug("> updated Yodelr: %s", self)
         return posts
 
@@ -146,6 +159,12 @@ class YodelrV1(yodelr.Yodelr):
         """Get all posts of a topic
 
         Algorithm:
+            Initialise an empty Stack for posts
+            Fetch timestamps in Index(topic,timestamps)
+            For-each $timestamp in $timestamps
+                Get $post using $timestamp in Index(timestamp,DATA)
+                Add $post on top of the Stack $posts
+            Return the Stack $posts
 
 
         Args:
@@ -206,4 +225,8 @@ class YodelrV1(yodelr.Yodelr):
         return topics
 
     def __repr__(self) -> str:
-        return f"Index(user,timestamp): {json.dumps(self.__timestamps_by_user)}\nIndex(timestamp,DATA): {json.dumps(self.__data_by_timestamp)}"
+        return f"""\r
+        Index(topic,timestamp): {json.dumps(self.__timestamps_by_topic)}
+        Index(user,timestamp): {json.dumps(self.__timestamps_by_user)}
+        Index(timestamp,DATA): {json.dumps(self.__data_by_timestamp)}
+        """

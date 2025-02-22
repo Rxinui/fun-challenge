@@ -94,3 +94,14 @@ def test_get_posts_size_3_is_desc_sorted(
         sample_10_posts[2],
         sample_10_posts[1],
     ]
+
+
+def test_get_posts_size_1_for_topic(
+    yodelr: Yodelr, user_name: str, sample_10_posts_and_topics: list[tuple[str, list]]
+):
+    yodelr.add_user(user_name)
+    yodelr.add_post(user_name, sample_10_posts_and_topics[4][0], 1)
+    assert (
+        yodelr.get_posts_for_topic(sample_10_posts_and_topics[4][0])
+        == sample_10_posts_and_topics[4][1]
+    )
