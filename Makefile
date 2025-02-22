@@ -14,3 +14,5 @@ clean:
 	
 localtest:
 	pytest -s 
+
+ltest: localtest

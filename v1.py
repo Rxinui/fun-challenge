@@ -31,6 +31,10 @@ class YodelrV1(yodelr.Yodelr):
         - Queue: if chosen as WrapperOnAdd, it optimises performance on getPost* and impacts addPost
         - if Stack is chosen as WrapperOnAdd then Queue is taken by WrapperOnGet (vice versa)
 
+        About timestamps_by_topic:
+        - For a given $topic, its list of timestamps can have duplicates because if one post contains 2 $topic that are equals, the timestamp is added 2 times (and so forth)
+        - Having duplicates is handy for getTrendingTopics to calculate the count (sum of a bitmap)
+
         Format:
         -------
         data_by_timestamp:
@@ -45,11 +49,11 @@ class YodelrV1(yodelr.Yodelr):
         self.__WrapperOnAdd = StackWrapper
         self.__WrapperOnGet = QueueWrapper
         self.__data_by_timestamp: dict[Timestamp, dict[str, Any]] = dict()
-        self.__timestamps_by_user: dict[User, Queue[Timestamp]] = dict()
+        self.__timestamps_by_user: dict[User, list[Timestamp]] = dict()
         # Because of the way I represent timestamps by topic
         # WrapperOnAdd should be StackWrapper as addPost is costly because
         # of the indexation of Topic
-        self.__timestamps_by_topic: dict[Topic, Queue[Timestamp]] = dict()
+        self.__timestamps_by_topic: dict[Topic, list[Timestamp]] = dict()
 
     def add_user(self, user_name: str) -> None:
         """Add user to the system.
@@ -131,18 +135,18 @@ class YodelrV1(yodelr.Yodelr):
             user_name (str): user
 
         Algorithm:
-            Initialise an empty Stack for posts
+            Initialise an empty $WrapperOnGet for posts
             Fetch timestamps in Index(user,timestamps)
             For-each $timestamp in $timestamps
                 Get $post using $timestamp in Index(timestamp,DATA)
-                Add $post on top of the Stack $posts
-            Return the Stack $posts
+                Add $post on top of the $WrapperOnGet $posts
+            Return the $WrapperOnGet $posts
 
         Returns:
-            List[str]: posts (as stack)
+            List[str]: posts (as $WrapperOnGet)
         """
         logger.info("Get posts for user '%s'...", user_name)
-        posts: Stack = []
+        posts: list = []
         timestamps = self.__timestamps_by_user.get(user_name, None)
         logger.debug("> timestamps=%s", timestamps)
         if timestamps is None:
@@ -151,7 +155,7 @@ class YodelrV1(yodelr.Yodelr):
         for timestamp in timestamps:
             post = self.__data_by_timestamp[timestamp][self.ID_POST]
             self.__WrapperOnGet.add(posts, post)
-            logger.debug("> post '%s' added to its stack=%s", post, posts)
+            logger.debug("> post '%s' added to posts=%s", post, posts)
         logger.debug("> updated Yodelr: %s", self)
         return posts
 
@@ -159,12 +163,12 @@ class YodelrV1(yodelr.Yodelr):
         """Get all posts of a topic
 
         Algorithm:
-            Initialise an empty Stack for posts
+            Initialise an empty $WrapperOnGet for posts
             Fetch timestamps in Index(topic,timestamps)
             For-each $timestamp in $timestamps
                 Get $post using $timestamp in Index(timestamp,DATA)
-                Add $post on top of the Stack $posts
-            Return the Stack $posts
+                Add $post on top of the $WrapperOnGet $posts
+            Return the $WrapperOnGet $posts
 
 
         Args:
@@ -173,7 +177,20 @@ class YodelrV1(yodelr.Yodelr):
         Returns:
             List[str]: _description_
         """
-        return
+        logging.info("Get posts for topic...")
+        posts = []
+        timestamps = self.__timestamps_by_topic.get(topic, None)
+        logger.debug("> timestamps of topic '%s': %s", topic, timestamps)
+        if timestamps is None:
+            # raise an Exception
+            return posts
+        ts_duplicate = -1  # No timestamp can be negative
+        for timestamp in timestamps:
+            if ts_duplicate != timestamp:
+                post = self.__data_by_timestamp[timestamp][self.ID_POST]
+                self.__WrapperOnGet.add(posts, post)
+            ts_duplicate = timestamp
+        return posts
 
     def get_trending_topics(self, from_timestamp: int, to_timestamp: int) -> List[str]:
         pass

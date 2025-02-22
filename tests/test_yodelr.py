@@ -48,6 +48,15 @@ def test_delete_user_with_single_post(
     assert not yodelr._is_user_in_system(user_name)
 
 
+def test_get_posts_size_0_for_user(
+    yodelr: Yodelr,
+    user_name: str,
+    sample_10_posts: list[str],
+):
+    yodelr.add_user(user_name)
+    assert yodelr.get_posts_for_user(user_name) == []
+
+
 def test_get_posts_size_1_for_user(
     yodelr: Yodelr,
     user_name: str,
@@ -96,12 +105,41 @@ def test_get_posts_size_3_is_desc_sorted(
     ]
 
 
+def test_get_posts_size_0_for_topic(
+    yodelr: Yodelr, user_name: str, sample_10_posts_and_topics: list[tuple[str, list]]
+):
+    FIRST_TOPIC = 0
+    POST = 0
+    TOPICS = 1
+    yodelr.add_user(user_name)
+    yodelr.add_post(user_name, sample_10_posts_and_topics[1][POST], 1)
+    yodelr.add_post(user_name, sample_10_posts_and_topics[3][POST], 2)
+    yodelr.add_post(user_name, sample_10_posts_and_topics[9][POST], 5)
+    assert yodelr.get_posts_for_topic("topic") == []
+
+
 def test_get_posts_size_1_for_topic(
     yodelr: Yodelr, user_name: str, sample_10_posts_and_topics: list[tuple[str, list]]
 ):
+    FIRST_TOPIC = 0
+    POST = 0
+    TOPICS = 1
     yodelr.add_user(user_name)
-    yodelr.add_post(user_name, sample_10_posts_and_topics[4][0], 1)
-    assert (
-        yodelr.get_posts_for_topic(sample_10_posts_and_topics[4][0])
-        == sample_10_posts_and_topics[4][1]
-    )
+    yodelr.add_post(user_name, sample_10_posts_and_topics[4][POST], 1)
+    assert yodelr.get_posts_for_topic(
+        sample_10_posts_and_topics[4][TOPICS][FIRST_TOPIC]
+    ) == [sample_10_posts_and_topics[4][POST]]
+
+
+def test_get_posts_size_3_for_topic(
+    yodelr: Yodelr, user_name: str, sample_10_posts_and_topics: list[tuple[str, list]]
+):
+    POST = 0
+    yodelr.add_user(user_name)
+    yodelr.add_post(user_name, sample_10_posts_and_topics[8][POST], 1)
+    yodelr.add_post(user_name, sample_10_posts_and_topics[1][POST], 12)
+    yodelr.add_post(user_name, sample_10_posts_and_topics[6][POST], 175)
+    assert yodelr.get_posts_for_topic("topic") == [
+        sample_10_posts_and_topics[6][POST],
+        sample_10_posts_and_topics[8][POST],
+    ]

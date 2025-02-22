@@ -16,9 +16,10 @@ def sample_10_posts() -> list[str]:
         "same here, no topic!",
         "#post is posted",
         "still no topic in the post",
-        "new #post inserted",
+        "new #post of #topic inserted",
         "told you, none, nada!",
-        "totally #unique #tweet",
+        "#full #topic #full #topic #full",
+        "do you understand nil topic",
     ]
 
 
