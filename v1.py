@@ -3,7 +3,7 @@ import yodelr
 import logging
 import re
 from typing import Any, List
-from datastruct import MaxHeapOfTupleWrapper, FIFOWrapper, LIFOWrapper
+from datastruct import MaxHeapBinome, FIFOWrapper, LIFOWrapper
 
 type Timestamp = int
 type Topic = str
@@ -240,9 +240,9 @@ class YodelrV1(yodelr.Yodelr):
         # Phase 3: creating trend based on topic its count
         trends = []
         for topic, count in topics_counter.items():
-            MaxHeapOfTupleWrapper.add(trends, (count, topic))
+            MaxHeapBinome.add(trends, (count, topic))
             logger.debug(">> trends=%s", trends)
-        trends = MaxHeapOfTupleWrapper.sort(trends, descending=True)
+        trends = MaxHeapBinome.sort(trends, descending=True)
         trends = [trend[1] for trend in trends]
         logger.debug("> 3rd pass trends=%s", trends)
         return trends

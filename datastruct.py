@@ -133,10 +133,10 @@ class FIFOWrapper[T](DataStructWrapper):
         pass
 
 
-type TupleCountTopic = tuple[int, int]
+type IntStr = tuple[int, str]
 
 
-class MaxHeapOfTupleWrapper[TupleCountTopic](FIFOWrapper):
+class MaxHeapBinome[IntStr](FIFOWrapper):
     """Index order
     0           -> newest added, top priority
     len(queue)  -> less priority
@@ -149,7 +149,24 @@ class MaxHeapOfTupleWrapper[TupleCountTopic](FIFOWrapper):
     IND_TOPIC = 1
 
     @classmethod
-    def add(cls, l: list[TupleCountTopic], e: tuple) -> None:
+    def has_priority_over(cls, t1: tuple[IntStr], t2: tuple[IntStr]) -> bool:
+        """Compare t1 with t2 and return whether t1 has over priority over t2
+
+        Args:
+            t1 (tuple[IntStr]): to compare
+            t2 (tuple[IntStr]): compared with
+
+        Returns:
+            bool: True if t1 more priority than t2 else False
+        """
+        return t1[cls.IND_COUNT] > t2[cls.IND_COUNT] or (
+            t1[cls.IND_COUNT] == t2[cls.IND_COUNT]
+            # current topic comes before parent topic ALPHABETICALLY
+            and t1[cls.IND_TOPIC] < t2[cls.IND_TOPIC]
+        )
+
+    @classmethod
+    def add(cls, l: list[IntStr], e: tuple) -> None:
         """Add $e to the heap respecting the following:
 
         1. Heap structure must be complete tree (at all time)
@@ -171,17 +188,13 @@ class MaxHeapOfTupleWrapper[TupleCountTopic](FIFOWrapper):
         # while am i not at the root
         while current != 0:
             parent = get_parent(current)
-            if l[current][cls.IND_COUNT] > l[parent][cls.IND_COUNT] or (
-                l[current][cls.IND_COUNT] == l[parent][cls.IND_COUNT]
-                # current topic comes before parent topic ALPHABETICALLY
-                and l[current][cls.IND_TOPIC] < l[parent][cls.IND_TOPIC]
-            ):
+            if cls.has_priority_over(l[current], l[parent]):
                 l[current], l[parent] = l[parent], l[current]
             current = parent
         print("updated heap=", l)
 
     @classmethod
-    def delete(cls, l: list[TupleCountTopic]) -> tuple:
+    def delete(cls, l: list[IntStr]) -> tuple:
         """Remove the top priority (FIFO)
 
         1. Heap structure must be complete tree (at all time)
@@ -191,7 +204,7 @@ class MaxHeapOfTupleWrapper[TupleCountTopic](FIFOWrapper):
         5. Parent node is calculated such as -> int(i/2)
 
         Args:
-            l (list[TupleCountTopic]): Stack of element
+            l (list[IntStr]): Stack of element
 
         Returns:
             tuple: element
@@ -216,24 +229,13 @@ class MaxHeapOfTupleWrapper[TupleCountTopic](FIFOWrapper):
                 print("> left and right leaves")
                 # take the top priority between sibling to get the direction to leaf
                 top_priority = (
-                    left
-                    if l[left][cls.IND_COUNT] > l[right][cls.IND_COUNT]
-                    or (
-                        l[left][cls.IND_COUNT] == l[right][cls.IND_COUNT]
-                        # current topic comes before parent topic ALPHABETICALLY
-                        and l[left][cls.IND_TOPIC] < l[right][cls.IND_TOPIC]
-                    )
-                    else right
+                    left if cls.has_priority_over(l[left], l[right]) else right
                 )
                 # compare the current node with top_priority
                 print(
                     f"> top priority is {'LEFT' if top_priority == left else 'RIGHT'}"
                 )
-                if l[top_priority][cls.IND_COUNT] > l[current][cls.IND_COUNT] or (
-                    l[top_priority][cls.IND_COUNT] == l[current][cls.IND_COUNT]
-                    # current topic comes before parent topic ALPHABETICALLY
-                    and l[top_priority][cls.IND_TOPIC] < l[current][cls.IND_TOPIC]
-                ):
+                if cls.has_priority_over(l[top_priority], l[current]):
                     print(">> swap")
                     l[top_priority], l[current] = l[current], l[top_priority]
                 current = top_priority
@@ -242,11 +244,7 @@ class MaxHeapOfTupleWrapper[TupleCountTopic](FIFOWrapper):
             elif left < len(l):
                 print("> only left leaf")
                 # compare with its parent
-                if l[left][cls.IND_COUNT] > l[current][cls.IND_COUNT] or (
-                    l[left][cls.IND_COUNT] == l[current][cls.IND_COUNT]
-                    # current topic comes before parent topic ALPHABETICALLY
-                    and l[left][cls.IND_TOPIC] < l[current][cls.IND_TOPIC]
-                ):
+                if cls.has_priority_over(l[left], l[current]):
                     print(">> swap")
                     l[current], l[left] = l[left], l[current]
                 current = left
@@ -256,11 +254,11 @@ class MaxHeapOfTupleWrapper[TupleCountTopic](FIFOWrapper):
         return e
 
     @classmethod
-    def first_out(cls, l: list[TupleCountTopic]) -> tuple:
+    def first_out(cls, l: list[IntStr]) -> tuple:
         """FIFO - Return the most priority (far left) in queue without removing it
 
         Args:
-            l (list[TupleCountTopic]): queue of element
+            l (list[IntStr]): queue of element
 
         Returns:
             tuple: element
@@ -270,17 +268,15 @@ class MaxHeapOfTupleWrapper[TupleCountTopic](FIFOWrapper):
         return l[0]
 
     @classmethod
-    def sort(
-        cls, l: list[TupleCountTopic], descending: bool = False
-    ) -> list[TupleCountTopic]:
+    def sort(cls, l: list[IntStr], descending: bool = False) -> list[IntStr]:
         """Heapsort
 
         Args:
-            l (list[TupleCountTopic]): _description_
+            l (list[IntStr]): _description_
             descending (bool, optional): _description_. Defaults to False.
 
         Returns:
-            list[TupleCountTopic]: _description_
+            list[IntStr]: _description_
         """
         print("START SORT", l)
         length = len(l)
@@ -288,7 +284,7 @@ class MaxHeapOfTupleWrapper[TupleCountTopic](FIFOWrapper):
             e = cls.delete(l)
             print(f"$ before recur. e={e} is deleted from {l}")
             cls.sort(l)
-            FIFOWrapper.add(l,e)
+            FIFOWrapper.add(l, e)
             print(f"$ after recur. e={e} is deleted from {l}")
         print("END SORT")
         return l
@@ -304,5 +300,5 @@ if __name__ == "__main__":
         (21, "t"),
         (1, "t"),
     ]
-    MaxHeapOfTupleWrapper.sort(maxheap)
+    MaxHeapBinome.sort(maxheap)
     print("FINAL SORTED HEAP", maxheap)
