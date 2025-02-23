@@ -146,18 +146,16 @@ def test_get_posts_size_3_for_topic(
 
 
 def test_get_trending_topics_oldest_to_latest(
-    yodelr: Yodelr, user_name: str, sample_10_posts_and_topics: list[tuple[str, list]]
+    yodelr: Yodelr, user_name: str, sample_10_posts: list[tuple[str, list]]
 ):
-    POST = 0
-    TOPIC = 1
     OLDEST_TIMESTAMP = 0
     LATEST_TIMESTAMP = 9
     for i in range(LATEST_TIMESTAMP):
-        yodelr.add_post(user_name, sample_10_posts_and_topics[i][POST], i)
+        yodelr.add_post(user_name, sample_10_posts[i], i)
     assert yodelr.get_trending_topics(OLDEST_TIMESTAMP, LATEST_TIMESTAMP) == [
-        "full",
         "post",
-        "topic",
         "test",
+        "topic",
         "first",
+        "full",
     ]

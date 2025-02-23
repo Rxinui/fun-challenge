@@ -1,3 +1,11 @@
+@Rxinui 2025-02-23T05:25:00+01:00
+I did it again but special #heap for #tuple for count-topic
+EOF
+
+@Rxinui 2025-02-23T05:24:38+01:00
+I create a #heap and its methods
+EOF
+
 @Rxinui 2025-02-22T15:01:36+01:00
 anyway, I'm very #happy that #getTrendingTopics is going smooth
 EOF

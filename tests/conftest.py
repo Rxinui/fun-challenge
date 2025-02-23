@@ -10,13 +10,13 @@ def user_name() -> str:
 @pytest.fixture(scope="module")
 def sample_10_posts() -> list[str]:
     """
-    Topic   Occurrence in corpus
-    -----   --------------------
-    first   1
-    test    2
-    post    3
-    topic   3
-    full    3
+    Topic   Occurrence in corpus    Occur. in corpus per post
+    -----   --------------------    -------------------------
+    first   1                       1
+    test    2                       2
+    post    3                       3
+    topic   3                       2
+    full    3                       1
 
     Returns:
         list[str]: posts

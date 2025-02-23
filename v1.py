@@ -3,7 +3,7 @@ import yodelr
 import logging
 import re
 from typing import Any, List
-from datastruct import QueueWrapper, StackWrapper
+from datastruct import MaxHeapOfTupleWrapper, QueueWrapper, StackWrapper
 
 type Timestamp = int
 type Topic = str
@@ -196,7 +196,49 @@ class YodelrV1(yodelr.Yodelr):
         return posts
 
     def get_trending_topics(self, from_timestamp: int, to_timestamp: int) -> List[str]:
-        pass
+        """Get topics trending in a specific timespan
+
+        Algorithm:
+            Init a new list for topics -> trends
+            For each timestamp between $to_timestamp and $from_timestamp
+                Retrieve $topics in Index($timestamp,DATA)
+                Retrieve count of $topic by applying 'len' to timestamps of Index($topic,timestamps)
+                Create a tuple containing ($topic, $count) -> trend
+                If $trends is empty then
+                    Add a $trend to $trends
+                If $trend.count > top_priority($trends)
+                    Enqueue $trend to $trends
+                Else
+                    Stack up $trend to $trends
+            Return $trends
+
+        Args:
+            from_timestamp (int): start trends period
+            to_timestamp (int): end trends period
+
+        Returns:
+            List[str]: _description_
+        """
+        logger.info("Get trending topics...")
+        IND_TOPIC = 1
+        IND_COUNT = 0  # NOTE order matters, count must be first as compare func on tuple applies on first index
+        trends = []
+        topics = []
+        for ts in range(from_timestamp, to_timestamp + 1):
+            if ts not in self.__data_by_timestamp:
+                continue
+            topics.extend(self.__data_by_timestamp[ts][self.ID_TOPICS])
+        logger.debug("> 1st pass topics=%s", topics)
+        topics = set(topics)
+        for topic in topics:
+            trend = [len(self.__timestamps_by_topic[topic]), topic]
+            if trend not in trends:
+                MaxHeapOfTupleWrapper.add(trends, trend)
+                logger.debug(">> trends=%s", trends)
+        trends = MaxHeapOfTupleWrapper.sort(trends, descending=True)
+        trends = [trend[1] for trend in trends]
+        logger.debug("> 2nd pass trends=%s", trends)
+        return trends
 
     def _is_user_in_system(self, user: User) -> bool:
         """[For test only]
