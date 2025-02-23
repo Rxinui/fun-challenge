@@ -6,7 +6,7 @@ from yodelr import Yodelr
 
 @pytest.fixture
 def yodelr() -> Yodelr:
-    return v1.YodelrV1()
+    return v1.YodelrV1(fast_write=True)
 
 
 def test_add_user(yodelr: Yodelr, user_name: str):

@@ -1,16 +1,14 @@
-import json
 import yodelr
 import logging
 import re
 from typing import Any, List
-from datastruct import MaxHeapBinome, FIFOWrapper, LIFOWrapper
+from internal.datastruct import MinHeapBinome
+from internal.wrapper import FIFOWrapper, LIFOWrapper
 
 type Timestamp = int
 type Topic = str
 type Post = str
 type User = str
-type Stack = list  # wrong !
-type Queue = list
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -23,13 +21,13 @@ class YodelrV1(yodelr.Yodelr):
     ID_USER: str = "author"
     REGEX_TOPIC = r"#([0-9a-zA-Z_]+)"
 
-    def __init__(self):
+    def __init__(self, fast_write: bool = True):
         """Initialise 3 indexes to modelise YodelrV1
 
         About Wrapper:
-        - Stack: if chosen as WrapperOnAdd, it optimises performance on addPost and impacts getPost
-        - Queue: if chosen as WrapperOnAdd, it optimises performance on getPost* and impacts addPost
-        - if Stack is chosen as WrapperOnAdd then Queue is taken by WrapperOnGet (vice versa)
+        - LIFO: if chosen as WrapperOnAdd, it optimises performance on addPost (fast_write) and impacts getPost
+        - FIFO: if chosen as WrapperOnAdd, it optimises performance on getPost* and impacts addPost
+        - if LIFO is chosen as WrapperOnAdd then FIFO is taken by WrapperOnGet (vice versa)
 
         About timestamps_by_topic:
         - For a given $topic, its list of timestamps can have duplicates because if one post contains 2 $topic that are equals, the timestamp is added 2 times (and so forth)
@@ -42,12 +40,10 @@ class YodelrV1(yodelr.Yodelr):
                 $ID_USER:       $user
                 $ID_POST:       $post
                 $ID_TOPICS:     Dict[$topic, int]      # key=$topic, value=occurence
-
-        In addition, we keep track of a monotonically history
         """
         super().__init__()
-        self.__WrapperOnAdd = LIFOWrapper
-        self.__WrapperOnGet = FIFOWrapper
+        self.__WrapperOnAdd = LIFOWrapper if fast_write else FIFOWrapper
+        self.__WrapperOnGet = FIFOWrapper if fast_write else LIFOWrapper
         self.__data_by_timestamp: dict[Timestamp, dict[str, Any]] = dict()
         self.__timestamps_by_user: dict[User, list[Timestamp]] = dict()
         # Because of the way I represent timestamps by topic
@@ -240,9 +236,9 @@ class YodelrV1(yodelr.Yodelr):
         # Phase 3: creating trend based on topic its count
         trends = []
         for topic, count in topics_counter.items():
-            MaxHeapBinome.add(trends, (count, topic))
+            MinHeapBinome.add(trends, (count, topic))
             logger.debug(">> trends=%s", trends)
-        trends = MaxHeapBinome.sort(trends, descending=True)
+        MinHeapBinome.sort(trends)
         trends = [trend[1] for trend in trends]
         logger.debug("> 3rd pass trends=%s", trends)
         return trends
@@ -276,9 +272,6 @@ class YodelrV1(yodelr.Yodelr):
         cond2 = user_name in self.__timestamps_by_user
         return cond1 and cond2
 
-    def _post_has_topic(self, post: Post, topic: str):
-        return
-
     @classmethod
     def _extract_topics(cls, post_text: str) -> list[Topic]:
         """Extract all term starting with '#' matching $REGEX_TOPIC
@@ -301,8 +294,8 @@ class YodelrV1(yodelr.Yodelr):
         return topics
 
     def __repr__(self) -> str:
-        return f"""\r
-        Index(topic,timestamp): {self.__timestamps_by_topic}
-        Index(user,timestamp): {self.__timestamps_by_user}
-        Index(timestamp,DATA): {self.__data_by_timestamp}
-        """
+        return f"""
+Index(topic,timestamp): {self.__timestamps_by_topic}
+Index(user,timestamp): {self.__timestamps_by_user}
+Index(timestamp,DATA): {self.__data_by_timestamp}
+"""
