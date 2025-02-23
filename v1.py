@@ -1,7 +1,7 @@
-import yodelr
 import logging
 import re
 from typing import Any, List
+from yodelr import Yodelr, YodelrError
 from internal.datastruct import MinHeapBinome
 from internal.wrapper import FIFOWrapper, LIFOWrapper
 
@@ -14,7 +14,7 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 
-class YodelrV1(yodelr.Yodelr):
+class YodelrV1(Yodelr):
 
     ID_POST: str = "post_text"
     ID_TOPICS: str = "topics"
@@ -54,7 +54,7 @@ class YodelrV1(yodelr.Yodelr):
     def add_user(self, user_name: str) -> None:
         """Add user to the system.
 
-        Insert user_name within index:posts_by_user
+        Insert user_name within Dict(user,timestamp)
 
         Args:
             user_name (str): user_name
@@ -66,9 +66,15 @@ class YodelrV1(yodelr.Yodelr):
     def add_post(self, user_name: str, post_text: str, timestamp: int) -> None:
         """Add post to system
 
+        If post has more than 140 characters,
+        the post will be truncated to 140 chars.
+
+        A topic found in post is case sensitive, therefore
+        topic '#hello' is different than '#Hello'
+
         Algorithm:
         1.  Get topics from post_text
-        2.  Add user to Index(user,timestamp)
+        2.  Add user to Dict(user,timestamp)
         3a.  Save topic in DATA index
         3b.  Save post in DATA index
         3c.  Save user in DATA index
@@ -79,10 +85,17 @@ class YodelrV1(yodelr.Yodelr):
             timestamp (int): _description_
         """
         logger.info("Add post...")
+        if not self._is_user_in_system(user_name):
+            raise YodelrError(YodelrError.UNKNOWN_USER)
+        if len(post_text) > 140:
+            logger.debug("> truncate post_text to 140 chars")
+            post_text = post_text[:140]
         logger.debug(
             "> associate timestamp '%s' of the post to user '%s'", timestamp, user_name
         )
         topics = self._extract_topics(post_text)
+        # Indexation of User->Timestamps
+        self.__WrapperOnAdd.add(self.__timestamps_by_user[user_name], timestamp)
         # Indexation of Timestamp->{$post, $topics, $user}
         self.__data_by_timestamp[timestamp] = {
             self.ID_POST: post_text,
@@ -93,25 +106,21 @@ class YodelrV1(yodelr.Yodelr):
         for topic in topics:
             topic_timestamps = self.__timestamps_by_topic.setdefault(topic, [])
             # Keep duplicate timestamp away
-            if (
+            if len(topic_timestamps) == 0 or (
                 len(topic_timestamps) > 0
                 and self.__WrapperOnAdd.first_out(topic_timestamps) != timestamp
-            ) or len(topic_timestamps) == 0:
+            ):
                 self.__WrapperOnAdd.add(topic_timestamps, timestamp)
-
-        # Indexation of User->Timestamps
-        user_timestamps = self.__timestamps_by_user.setdefault(user_name, [])
-        self.__WrapperOnAdd.add(user_timestamps, timestamp)
         logger.debug("> updated Yodelr: %s", self)
 
     def delete_user(self, user_name: str) -> None:
         """Delete user and all its posts
 
         Algorithm:
-        1. Fetch timestamps from user in Index(user,timestamp)
-        2. Delete the user reference from Index(user,timestamp)
+        1. Fetch timestamps from user in Dict(user,timestamp)
+        2. Delete the user reference from Dict(user,timestamp)
         3. For each $timestamp in $timestamps
-        4.      Delete $timestamp from Index(timestamp,DATA)
+        4.      Delete $timestamp from Dict(timestamp,DATA)
 
         Complexity:
             Time:   O(T) with T size of $timestamps
@@ -121,11 +130,10 @@ class YodelrV1(yodelr.Yodelr):
         """
         logger.info("Deleting user '%s'...", user_name)
         timestamps = self.__timestamps_by_user.get(user_name, None)
-        logger.debug("> timestamps from user '%s': %s", user_name, timestamps)
         if timestamps is None:
-            # Raise exception UserNotRegisteredError
-            return
-        logger.debug("> delete user '%s' from Index(user,timestamps)", user_name)
+            raise YodelrError(YodelrError.UNKNOWN_USER)
+        logger.debug("> timestamps from user '%s': %s", user_name, timestamps)
+        logger.debug("> delete user '%s' from Dict(user,timestamps)", user_name)
         del self.__timestamps_by_user[user_name]
         for timestamp in timestamps:
             del self.__data_by_timestamp[timestamp]
@@ -138,9 +146,9 @@ class YodelrV1(yodelr.Yodelr):
 
         Algorithm:
             Initialise an empty $WrapperOnGet for posts
-            Fetch timestamps in Index(user,timestamps)
+            Fetch timestamps in Dict(user,timestamps)
             For-each $timestamp in $timestamps
-                Get $post using $timestamp in Index(timestamp,DATA)
+                Get $post using $timestamp in Dict(timestamp,DATA)
                 Add $post on top of the $WrapperOnGet $posts
             Return the $WrapperOnGet $posts
 
@@ -152,8 +160,7 @@ class YodelrV1(yodelr.Yodelr):
         timestamps = self.__timestamps_by_user.get(user_name, None)
         logger.debug("> timestamps=%s", timestamps)
         if timestamps is None:
-            # raise exception UserNotRegisteredError
-            return
+            raise YodelrError(YodelrError.UNKNOWN_USER)
         for timestamp in timestamps:
             post = self.__data_by_timestamp[timestamp][self.ID_POST]
             self.__WrapperOnGet.add(posts, post)
@@ -166,9 +173,9 @@ class YodelrV1(yodelr.Yodelr):
 
         Algorithm:
             Initialise an empty $WrapperOnGet for posts
-            Fetch timestamps in Index(topic,timestamps)
+            Fetch timestamps in Dict(topic,timestamps)
             For-each $timestamp in $timestamps
-                Get $post using $timestamp in Index(timestamp,DATA)
+                Get $post using $timestamp in Dict(timestamp,DATA)
                 Add $post on top of the $WrapperOnGet $posts
             Return the $WrapperOnGet $posts
 
@@ -181,11 +188,8 @@ class YodelrV1(yodelr.Yodelr):
         """
         logging.info("Get posts for topic...")
         posts = []
-        timestamps = self.__timestamps_by_topic.get(topic, None)
+        timestamps = self.__timestamps_by_topic.get(topic, [])
         logger.debug("> timestamps of topic '%s': %s", topic, timestamps)
-        if timestamps is None:
-            # raise an Exception
-            return posts
         for timestamp in timestamps:
             post = self.__data_by_timestamp[timestamp][self.ID_POST]
             self.__WrapperOnGet.add(posts, post)
@@ -197,8 +201,8 @@ class YodelrV1(yodelr.Yodelr):
         Algorithm:
             Init a new list for topics -> trends
             For each timestamp between $to_timestamp and $from_timestamp
-                Retrieve $topics in Index($timestamp,DATA)
-                Retrieve count of $topic by applying 'len' to timestamps of Index($topic,timestamps)
+                Retrieve $topics in Dict($timestamp,DATA)
+                Retrieve count of $topic by applying 'len' to timestamps of Dict($topic,timestamps)
                 Create a tuple containing ($topic, $count) -> trend
                 If $trends is empty then
                     Add a $trend to $trends
@@ -244,7 +248,7 @@ class YodelrV1(yodelr.Yodelr):
         return trends
 
     def _is_user_in_system(self, user: User) -> bool:
-        """[For test only]
+        """Check if user registered in system
 
         Args:
             user (User): _description_
@@ -252,11 +256,10 @@ class YodelrV1(yodelr.Yodelr):
         Returns:
             bool: _description_
         """
-        logger.debug("Yodelr: %s", self)
         return user in self.__timestamps_by_user
 
     def _is_post_in_system(self, user_name: User, post_text: str) -> bool:
-        """[For test only]
+        """[FOR TEST ONLY]
 
         Args:
             user (User): _description_
@@ -264,7 +267,6 @@ class YodelrV1(yodelr.Yodelr):
         Returns:
             bool: _description_
         """
-        logger.debug("Yodelr: %s", self)
         timestamps = self.__timestamps_by_user[user_name]
         cond1 = post_text in [
             self.__data_by_timestamp[ts][self.ID_POST] for ts in timestamps
@@ -273,7 +275,7 @@ class YodelrV1(yodelr.Yodelr):
         return cond1 and cond2
 
     @classmethod
-    def _extract_topics(cls, post_text: str) -> list[Topic]:
+    def _extract_topics(cls, post_text: str, case_sensitive=True) -> list[Topic]:
         """Extract all term starting with '#' matching $REGEX_TOPIC
 
         Args:
@@ -285,6 +287,8 @@ class YodelrV1(yodelr.Yodelr):
         # NOTE re.findall takes duplicates as well which is not handy for us
         # NOTE re.findall goes through the whole string, then O(n)
         # topics = re.findall(cls.REGEX_TOPIC, post_text)
+        if not case_sensitive:
+            post_text = post_text.lower()
         topics = []
         for match in re.finditer(cls.REGEX_TOPIC, post_text):
             topic = match.group(0)[1:]  # remove hashtag
@@ -295,7 +299,7 @@ class YodelrV1(yodelr.Yodelr):
 
     def __repr__(self) -> str:
         return f"""
-Index(topic,timestamp): {self.__timestamps_by_topic}
-Index(user,timestamp): {self.__timestamps_by_user}
-Index(timestamp,DATA): {self.__data_by_timestamp}
+Dict(topic,timestamp): {self.__timestamps_by_topic}
+Dict(user,timestamp): {self.__timestamps_by_user}
+Dict(timestamp,DATA): {self.__data_by_timestamp}
 """

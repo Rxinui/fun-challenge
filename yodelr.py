@@ -36,3 +36,12 @@ class Yodelr(ABC):
     @abstractmethod
     def get_trending_topics(self, from_timestamp: int, to_timestamp: int) -> List[str]:
         pass
+
+
+class YodelrError(Exception):
+
+    UNKNOWN_USER = 100
+
+    def __init__(self, error_code: int, message: str = ""):
+        self.error_code = error_code
+        super().__init__(f"(ERR={self.error_code}) {message}".strip())

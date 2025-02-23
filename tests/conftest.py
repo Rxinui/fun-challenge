@@ -8,6 +8,19 @@ def user_name() -> str:
 
 
 @pytest.fixture(scope="module")
+def sample_2_case_sensitivity_posts() -> list[str]:
+    """Special topic with case sensitivity
+
+    Returns:
+        list[str]: posts
+    """
+    return [
+        "My very #first",
+        "#First post, but im not the #first",
+    ]
+
+
+@pytest.fixture(scope="module")
 def sample_10_posts() -> list[str]:
     """
     Topic   Occurrence in corpus    Occur. in corpus per post
@@ -23,12 +36,12 @@ def sample_10_posts() -> list[str]:
     """
     return [
         "My very #first #test post.",
-        "Post with odd index has no topic", # 1
+        "Post with odd index has no topic",  # 1
         "Random #post for #test",
-        "same here, no topic!", #3
+        "same here, no topic!",  # 3
         "#post is posted",
         "still no topic in the post",
-        "new #post of #topic inserted", 
+        "new #post of #topic inserted",
         "told you, none, nada!",
         "#full #topic #full #topic #full",
         "do you understand nil topic",
