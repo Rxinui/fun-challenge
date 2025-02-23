@@ -231,7 +231,14 @@ class YodelrV1(yodelr.Yodelr):
         logger.debug("> 1st pass topics=%s", topics)
         topics = set(topics)
         for topic in topics:
-            trend = [len(self.__timestamps_by_topic[topic]), topic]
+            topic_timestamps = self.__timestamps_by_topic[topic]
+            topic_timestamps = list(
+                filter(
+                    lambda ts: ts >= from_timestamp and ts <= to_timestamp,
+                    topic_timestamps,
+                )
+            )
+            trend = (len(topic_timestamps), topic)
             if trend not in trends:
                 MaxHeapOfTupleWrapper.add(trends, trend)
                 logger.debug(">> trends=%s", trends)

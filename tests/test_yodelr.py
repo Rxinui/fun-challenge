@@ -149,8 +149,8 @@ def test_get_trending_topics_oldest_to_latest(
     yodelr: Yodelr, user_name: str, sample_10_posts: list[tuple[str, list]]
 ):
     OLDEST_TIMESTAMP = 0
-    LATEST_TIMESTAMP = 9
-    for i in range(LATEST_TIMESTAMP):
+    LATEST_TIMESTAMP = len(sample_10_posts) - 1
+    for i in range(len(sample_10_posts)):
         yodelr.add_post(user_name, sample_10_posts[i], i)
     assert yodelr.get_trending_topics(OLDEST_TIMESTAMP, LATEST_TIMESTAMP) == [
         "post",
@@ -159,3 +159,23 @@ def test_get_trending_topics_oldest_to_latest(
         "first",
         "full",
     ]
+
+
+def test_get_trending_topics_in_between_ts_count_focus(
+    yodelr: Yodelr, user_name: str, sample_10_posts: list[tuple[str, list]]
+):
+    TS_1 = 1
+    TS_2 = 6
+    for i in range(len(sample_10_posts)):
+        yodelr.add_post(user_name, sample_10_posts[i], i)
+    assert yodelr.get_trending_topics(TS_1, TS_2) == ["post", "test", "topic"]
+
+
+def test_get_trending_topics_in_between_ts_alphabetic_focus(
+    yodelr: Yodelr, user_name: str, sample_10_posts: list[tuple[str, list]]
+):
+    TS_1 = 7
+    TS_2 = 9
+    for i in range(len(sample_10_posts)):
+        yodelr.add_post(user_name, sample_10_posts[i], i)
+    assert yodelr.get_trending_topics(TS_1, TS_2) == ["full", "topic"]
