@@ -284,14 +284,25 @@ class MaxHeapOfTupleWrapper[TupleCountTopic](FIFOWrapper):
         """
         print("START SORT", l)
         length = len(l)
-        nl = [None] * length
-        if descending:
-            k = 0
-            c = 1
-        else:
-            k = length - 1
-            c = -1
-        for i in range(length):
-            nl[i * c + k] = cls.delete(l)
-        print("END SORT", nl)
-        return nl
+        if len(l) > 0:
+            e = cls.delete(l)
+            print(f"$ before recur. e={e} is deleted from {l}")
+            cls.sort(l)
+            FIFOWrapper.add(l,e)
+            print(f"$ after recur. e={e} is deleted from {l}")
+        print("END SORT")
+        return l
+
+
+if __name__ == "__main__":
+    maxheap = [
+        (33, "t"),
+        (28, "t"),
+        (25, "t"),
+        (8, "t"),
+        (15, "t"),
+        (21, "t"),
+        (1, "t"),
+    ]
+    MaxHeapOfTupleWrapper.sort(maxheap)
+    print("FINAL SORTED HEAP", maxheap)
