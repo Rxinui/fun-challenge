@@ -3,7 +3,7 @@ import yodelr
 import logging
 import re
 from typing import Any, List
-from datastruct import MaxHeapOfTupleWrapper, QueueWrapper, StackWrapper
+from datastruct import MaxHeapOfTupleWrapper, FIFOWrapper, LIFOWrapper
 
 type Timestamp = int
 type Topic = str
@@ -46,12 +46,12 @@ class YodelrV1(yodelr.Yodelr):
         In addition, we keep track of a monotonically history
         """
         super().__init__()
-        self.__WrapperOnAdd = StackWrapper
-        self.__WrapperOnGet = QueueWrapper
+        self.__WrapperOnAdd = LIFOWrapper
+        self.__WrapperOnGet = FIFOWrapper
         self.__data_by_timestamp: dict[Timestamp, dict[str, Any]] = dict()
         self.__timestamps_by_user: dict[User, list[Timestamp]] = dict()
         # Because of the way I represent timestamps by topic
-        # WrapperOnAdd should be StackWrapper as addPost is costly because
+        # WrapperOnAdd should be LIFOWrapper as addPost is costly because
         # of the indexation of Topic
         self.__timestamps_by_topic: dict[Topic, list[Timestamp]] = dict()
 
@@ -86,7 +86,7 @@ class YodelrV1(yodelr.Yodelr):
         logger.debug(
             "> associate timestamp '%s' of the post to user '%s'", timestamp, user_name
         )
-        topics = set(self._extract_topics(post_text))
+        topics = self._extract_topics(post_text)
         # Indexation of Timestamp->{$post, $topics, $user}
         self.__data_by_timestamp[timestamp] = {
             self.ID_POST: post_text,
@@ -99,7 +99,7 @@ class YodelrV1(yodelr.Yodelr):
             # Keep duplicate timestamp away
             if (
                 len(topic_timestamps) > 0
-                and self.__WrapperOnAdd.top_priority(topic_timestamps) != timestamp
+                and self.__WrapperOnAdd.first_out(topic_timestamps) != timestamp
             ) or len(topic_timestamps) == 0:
                 self.__WrapperOnAdd.add(topic_timestamps, timestamp)
 
@@ -206,7 +206,7 @@ class YodelrV1(yodelr.Yodelr):
                 Create a tuple containing ($topic, $count) -> trend
                 If $trends is empty then
                     Add a $trend to $trends
-                If $trend.count > top_priority($trends)
+                If $trend.count > first_out($trends)
                     Enqueue $trend to $trends
                 Else
                     Stack up $trend to $trends
@@ -219,32 +219,32 @@ class YodelrV1(yodelr.Yodelr):
         Returns:
             List[str]: _description_
         """
-        logger.info("Get trending topics...")
-        IND_TOPIC = 1
-        IND_COUNT = 0  # NOTE order matters, count must be first as compare func on tuple applies on first index
-        trends = []
+        logger.info(
+            "Get trending topics from=%s to=%s...", from_timestamp, to_timestamp
+        )
+        # Phase 1: regroup all topics within the timespan
         topics = []
         for ts in range(from_timestamp, to_timestamp + 1):
             if ts not in self.__data_by_timestamp:
                 continue
             topics.extend(self.__data_by_timestamp[ts][self.ID_TOPICS])
         logger.debug("> 1st pass topics=%s", topics)
-        topics = set(topics)
+        # Phase 2: counting number of topics
+        topics_counter = dict()
         for topic in topics:
-            topic_timestamps = self.__timestamps_by_topic[topic]
-            topic_timestamps = list(
-                filter(
-                    lambda ts: ts >= from_timestamp and ts <= to_timestamp,
-                    topic_timestamps,
-                )
-            )
-            trend = (len(topic_timestamps), topic)
-            if trend not in trends:
-                MaxHeapOfTupleWrapper.add(trends, trend)
-                logger.debug(">> trends=%s", trends)
+            if topic not in topics_counter:
+                topics_counter[topic] = 1
+            else:
+                topics_counter[topic] += 1
+        logger.debug("> 2nd pass counter=%s", topics)
+        # Phase 3: creating trend based on topic its count
+        trends = []
+        for topic, count in topics_counter.items():
+            MaxHeapOfTupleWrapper.add(trends, (count, topic))
+            logger.debug(">> trends=%s", trends)
         trends = MaxHeapOfTupleWrapper.sort(trends, descending=True)
         trends = [trend[1] for trend in trends]
-        logger.debug("> 2nd pass trends=%s", trends)
+        logger.debug("> 3rd pass trends=%s", trends)
         return trends
 
     def _is_user_in_system(self, user: User) -> bool:
@@ -289,7 +289,14 @@ class YodelrV1(yodelr.Yodelr):
         Returns:
             list[Topic]: topics
         """
-        topics = re.findall(cls.REGEX_TOPIC, post_text)
+        # NOTE re.findall takes duplicates as well which is not handy for us
+        # NOTE re.findall goes through the whole string, then O(n)
+        # topics = re.findall(cls.REGEX_TOPIC, post_text)
+        topics = []
+        for match in re.finditer(cls.REGEX_TOPIC, post_text):
+            topic = match.group(0)[1:]  # remove hashtag
+            if topic not in topics:
+                topics.append(topic)
         logger.debug("Topics found: %s", topics)
         return topics
 

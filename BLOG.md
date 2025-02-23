@@ -1,3 +1,7 @@
+@Rxinui 2025-02-23T19:24:44+01:00
+i change extract #topic to remove #duplicate from the #start
+EOF
+
 @Rxinui 2025-02-23T05:25:00+01:00
 I did it again but special #heap for #tuple for count-topic
 EOF

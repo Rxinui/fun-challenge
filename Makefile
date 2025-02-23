@@ -13,6 +13,6 @@ clean:
 	podman rm -f $(image):$(tag)
 	
 localtest:
-	clear && pytest -s 
+	clear && pytest
 
 ltest: localtest
