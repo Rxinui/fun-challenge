@@ -8,8 +8,12 @@ jobs:
     runs-on: ["ubuntu-latest"]
     env:
       IMAGE: rxinui/yodelr
+      APP_ENV: ci
     steps:
       - uses: actions/checkout@v4
+
+      - name: Update APP_ENV for ci
+        run: sed -i -E "s/^(APP_ENV)=.*/\1=${{env.APP_ENV}}/" .env
 
       - name: Build Yodelr from Containerfile
         uses: docker/build-push-action@v6
@@ -19,4 +23,4 @@ jobs:
           labels: name=yodelr,tier=script,lang=python
 
       - name: Test Yodelr
-        run: make test
+        run: make unittest-in-container
