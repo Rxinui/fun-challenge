@@ -2,6 +2,14 @@
 name: performance-tests
 on:
   workflow_dispatch:
+  workflow_run:
+    workflows:
+      - ci
+    types:
+      - completed
+    branches:
+      - main
+      - release/**
 jobs:
   perftest:
     runs-on: ["ubuntu-latest"]
@@ -10,8 +18,12 @@ jobs:
         words-in-corpus: [100, 1000, 10000, 100000]
     env:
       IMAGE: rxinui/yodelr
+      APP_ENV: ci
     steps:
       - uses: actions/checkout@v4
+
+      - name: Update APP_ENV for ci
+        run: sed -i -E "s/^(APP_ENV)=.*/\1=${{env.APP_ENV}}/" .env
 
       - name: Build Yodelr from Containerfile
         uses: docker/build-push-action@v6
