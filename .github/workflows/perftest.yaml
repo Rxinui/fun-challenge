@@ -1,0 +1,24 @@
+#description: CI pipeline for Yodelr
+name: performance-tests
+on:
+  workflow_dispatch:
+jobs:
+  perftest:
+    runs-on: ["ubuntu-latest"]
+    strategy:
+      matrix:
+        words-in-corpus: [100, 1000, 10000, 100000]
+    env:
+      IMAGE: rxinui/yodelr
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Yodelr from Containerfile
+        uses: docker/build-push-action@v6
+        with:
+          file: ./Containerfile
+          tags: "${{ env.IMAGE }}:${{ github.ref_name == 'main' && 'latest' || 'alpha' }}"
+          labels: name=yodelr,tier=script,lang=python
+
+      - name: Test Yodelr
+        run: make perftest-in-container psize=${{ matrix.words-in-corpus }}

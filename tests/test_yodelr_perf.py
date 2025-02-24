@@ -3,6 +3,7 @@ import pytest
 import random
 import v1
 import logging
+import math
 from time import time
 from lorem_text import lorem
 from yodelr import Yodelr
@@ -43,6 +44,11 @@ def random_post_generator_words() -> str:
 def test_perf_add_post_and_all_getters_with_multi_users(
     yodelr: Yodelr, user_names: list[str], random_post_generator_words: str
 ):
+    logging.warning(
+        "Number of post '%s' from '%s' words",
+        math.ceil(len(random_post_generator_words) / yodelr.MAX_POST_CHARS),
+        ENV_PERF_SIZE,
+    )
     for u in user_names:
         yodelr.add_user(u)
     m = 0
