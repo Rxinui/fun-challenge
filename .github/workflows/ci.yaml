@@ -15,12 +15,5 @@ jobs:
       - name: Update APP_ENV for ci
         run: sed -i -E "s/^(APP_ENV)=.*/\1=${{env.APP_ENV}}/" .env
 
-      - name: Build Yodelr from Containerfile
-        uses: docker/build-push-action@v6
-        with:
-          file: ./Containerfile
-          tags: "${{ env.IMAGE }}:${{ github.ref_name == 'main' && 'latest' || 'alpha' }}"
-          labels: name=yodelr,tier=script,lang=python
-
       - name: Test Yodelr
         run: make unittest-in-container

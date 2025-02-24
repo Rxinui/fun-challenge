@@ -14,11 +14,11 @@ endif
 build:
 	$(BUILDER) build -t docker.io/$(image):$(tag) .
 
-unittest-in-container: clean
+unittest-in-container: clean build
 	$(BUILDER) run --rm --pull=never docker.io/$(image):$(tag) -m pytest --color=yes tests/test_yodelr_api.py
 
-perftest-in-container: clean
-	$(BUILDER) run --rm --env PERF_GENERATOR_SIZE=$(psize) $(image):$(tag) -m pytest --color=yes --log-cli-level=WARNING tests/*_perf*.py
+perftest-in-container: clean build
+	$(BUILDER) run --rm --pull=never -e PERF_GENERATOR_SIZE=$(psize) $(image):$(tag) -m pytest --color=yes --log-cli-level=WARNING tests/*_perf*.py
 
 clean:
 	$(BUILDER) rm -f $(image):$(tag)
