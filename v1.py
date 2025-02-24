@@ -20,6 +20,7 @@ class YodelrV1(Yodelr):
     ID_TOPICS: str = "topics"
     ID_USER: str = "author"
     REGEX_TOPIC = r"#([0-9a-zA-Z_]+)"
+    MAX_POST_CHARS = 140
 
     def __init__(self, fast_write: bool = True):
         """Initialise 3 indexes to modelise YodelrV1
@@ -66,8 +67,8 @@ class YodelrV1(Yodelr):
     def add_post(self, user_name: str, post_text: str, timestamp: int) -> None:
         """Add post to system
 
-        If post has more than 140 characters,
-        the post will be truncated to 140 chars.
+        If post has more than $MAX_POST_CHARS characters,
+        the post will be truncated to $MAX_POST_CHARS chars.
 
         A topic found in post is case sensitive, therefore
         topic '#hello' is different than '#Hello'
@@ -87,9 +88,9 @@ class YodelrV1(Yodelr):
         logger.info("Add post...")
         if not self._is_user_in_system(user_name):
             raise YodelrError(YodelrError.UNKNOWN_USER)
-        if len(post_text) > 140:
-            logger.debug("> truncate post_text to 140 chars")
-            post_text = post_text[:140]
+        if len(post_text) > self.MAX_POST_CHARS:
+            logger.debug(f"> truncate post_text to {self.MAX_POST_CHARS} chars")
+            post_text = post_text[: self.MAX_POST_CHARS]
         logger.debug(
             "> associate timestamp '%s' of the post to user '%s'", timestamp, user_name
         )
@@ -258,7 +259,7 @@ class YodelrV1(Yodelr):
         """
         return user in self.__timestamps_by_user
 
-    def _is_post_in_system(self, user_name: User, post_text: str) -> bool:
+    def _test_is_post_in_system(self, user_name: User, post_text: str) -> bool:
         """[FOR TEST ONLY]
 
         Args:
@@ -273,6 +274,14 @@ class YodelrV1(Yodelr):
         ]
         cond2 = user_name in self.__timestamps_by_user
         return cond1 and cond2
+
+    def _test_get_all_topics(self) -> list[Topic]:
+        """[FOR TEST ONLY]
+
+        Returns:
+            list[Topic]: all topic
+        """
+        return self.__timestamps_by_topic.keys()
 
     @classmethod
     def _extract_topics(cls, post_text: str, case_sensitive=True) -> list[Topic]:

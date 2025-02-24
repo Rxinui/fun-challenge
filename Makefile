@@ -3,6 +3,7 @@ export
 
 tag ?= alpha
 image = rxinui/yodelr
+psize ?= 10000
 build:
 	podman build -t $(image):$(tag) .
 
@@ -16,3 +17,6 @@ localtest:
 	clear && pytest
 
 ltest: localtest
+
+ptest:
+	clear && PERF_GENERATOR_SIZE=$(psize) pytest --log-cli-level=WARNING tests/test_yodelr_perf.py

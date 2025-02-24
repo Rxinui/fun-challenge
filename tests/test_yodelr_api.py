@@ -74,7 +74,7 @@ def test_add_post(
 ):
     yodelr.add_user(user_name)
     yodelr.add_post(user_name, sample_10_posts[0], 1)
-    assert yodelr._is_post_in_system(user_name, sample_10_posts[0])
+    assert yodelr._test_is_post_in_system(user_name, sample_10_posts[0])
 
 
 def test_add_post_over_chars_limit(
@@ -86,9 +86,9 @@ def test_add_post_over_chars_limit(
     post_text_22 = " with #medium worries."
     yodelr.add_user(user_name)
     yodelr.add_post(user_name, post_text_140 + post_text_22, 1)
-    assert yodelr._is_post_in_system(
+    assert yodelr._test_is_post_in_system(
         user_name, post_text_140
-    ) and not yodelr._is_post_in_system(user_name, post_text_140 + post_text_22)
+    ) and not yodelr._test_is_post_in_system(user_name, post_text_140 + post_text_22)
 
 
 def test_delete_user_with_zero_post(
