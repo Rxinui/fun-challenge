@@ -23,7 +23,7 @@ def random_post_generator(words: int) -> str:
 
 @pytest.fixture
 def yodelr() -> Yodelr:
-    return v1.YodelrV1(fast_write=True)
+    return v1.YodelrV1()
 
 
 @pytest.fixture

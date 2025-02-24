@@ -21,36 +21,26 @@ class YodelrV1(Yodelr):
     REGEX_TOPIC = r"#([0-9a-zA-Z_]+)"
     MAX_POST_CHARS = 140
 
-    def __init__(self, fast_write: bool = True):
-        """Initialise 3 indexes to modelise YodelrV1
+    def __init__(self):
+        """Initialise a composite inverted index and list of posts
 
-        About Wrapper:
-        - LIFO: if chosen as WrapperOnAdd, it optimises performance on addPost (fast_write) and impacts getPost
-        - FIFO: if chosen as WrapperOnAdd, it optimises performance on getPost* and impacts addPost
-        - if LIFO is chosen as WrapperOnAdd then FIFO is taken by WrapperOnGet (vice versa)
+        Keep track of post deleted for future improvement using
+        clean-on-threshold algorithn #v3
 
-        About timestamps_by_topic:
-        - For a given $topic, its list of timestamps can have duplicates because if one post contains 2 $topic that are equals, the timestamp is added 2 times (and so forth)
-        - Having duplicates is handy for getTrendingTopics to calculate the count (sum of a bitmap)
-
-        Format:
-        -------
-        data_by_timestamp:
-            $timestamp:
-                $ID_USER:       $user
-                $ID_POST:       $post
-                $ID_TOPICS:     Dict[$topic, int]      # key=$topic, value=occurence
+        Composite inverted index:
+            Topic:      List[int]
+            User:       List[int]
+            Timestamp:  int
         """
         super().__init__()
         self._posts: list[Post] = []
         self._inverted_composite_index: dict[
             Topic | Timestamp | User, List[int] | int
         ] = dict()
+        self._post_deleted = 0
 
     def add_user(self, user_name: str) -> None:
         """Add user to the system.
-
-        Insert user_name within Dict(user,timestamp)
 
         Args:
             user_name (str): user_name
@@ -69,16 +59,16 @@ class YodelrV1(Yodelr):
         topic '#hello' is different than '#Hello'
 
         Algorithm:
-        1.  Get topics from post_text
-        2.  Add user to Dict(user,timestamp)
-        3a.  Save topic in DATA index
-        3b.  Save post in DATA index
-        3c.  Save user in DATA index
+        1. Extract topics from post
+        2. Add post to posts
+        3. Add indice of post in its list in inverted index timestamp
+        3. Add indice of post in its list in inverted index user
+        3. Add indice of post in its list in inverted index topic
 
         Args:
-            user_name (str): _description_
-            post_text (str): _description_
-            timestamp (int): _description_
+            user_name (str): user
+            post_text (str): post
+            timestamp (int): timestamp
         """
         logger.info("Add post...")
         if not self._is_user_in_system(user_name):
@@ -90,6 +80,7 @@ class YodelrV1(Yodelr):
         self._inverted_composite_index[str(timestamp)] = ind
         self._inverted_composite_index[user_name].append(ind)
         for topic in topics:
+            # NOTE no duplicate for topic
             if ind not in self._inverted_composite_index.get(topic, []):
                 self._inverted_composite_index.setdefault(topic, []).append(ind)
         logger.debug("> updated Yodelr: %s", self)
@@ -98,13 +89,9 @@ class YodelrV1(Yodelr):
         """Delete user and all its posts
 
         Algorithm:
-        1. Fetch timestamps from user in Dict(user,timestamp)
-        2. Delete the user reference from Dict(user,timestamp)
-        3. For each $timestamp in $timestamps
-        4.      Delete $timestamp from Dict(timestamp,DATA)
-
-        Complexity:
-            Time:   O(T) with T size of $timestamps
+        1. Get indices from inverted index user
+        2. Delete user from inverted index
+        3. For each indice, replace post with None to mark as deleted
 
         Args:
             user_name (str): user
@@ -117,7 +104,11 @@ class YodelrV1(Yodelr):
         logger.debug("> delete user '%s' from inverted composite index", user_name)
         del self._inverted_composite_index[user_name]
         for ind in user_inds:
-            self._posts[ind] = None  # mark as removed
+            # NOTE mark as removed - policy to speed up
+            self._posts[ind] = None
+            self._post_deleted += 1
+        # NOTE shift all post to left to downsize posts and free space
+        # TODO v3 - implement clean-on-threshold to free space on self._posts
 
     def get_posts_for_user(self, user_name: str) -> List[str]:
         """Get list of post from a user
@@ -126,15 +117,12 @@ class YodelrV1(Yodelr):
             user_name (str): user
 
         Algorithm:
-            Initialise an empty $WrapperOnGet for posts
-            Fetch timestamps in Dict(user,timestamps)
-            For-each $timestamp in $timestamps
-                Get $post using $timestamp in Dict(timestamp,DATA)
-                Add $post on top of the $WrapperOnGet $posts
-            Return the $WrapperOnGet $posts
+        1. Get indices from inverted index user
+        2. For each indices, enqueue post to posts
+        3. Return posts
 
         Returns:
-            List[str]: posts (as $WrapperOnGet)
+            List[str]: posts
         """
         logger.info("Get posts for user '%s'...", user_name)
         posts: list = []
@@ -151,19 +139,16 @@ class YodelrV1(Yodelr):
         """Get all posts of a topic
 
         Algorithm:
-            Initialise an empty $WrapperOnGet for posts
-            Fetch timestamps in Dict(topic,timestamps)
-            For-each $timestamp in $timestamps
-                Get $post using $timestamp in Dict(timestamp,DATA)
-                Add $post on top of the $WrapperOnGet $posts
-            Return the $WrapperOnGet $posts
+        1. Get indices from inverted index topic
+        2. For each indices, enqueue post to posts
+        3. Return posts
 
 
         Args:
-            topic (str): _description_
+            topic (str): topic
 
         Returns:
-            List[str]: _description_
+            List[str]: posts
         """
         logging.info("Get posts for topic...")
         posts = []
@@ -177,26 +162,23 @@ class YodelrV1(Yodelr):
         """Get topics trending in a specific timespan
 
         Algorithm:
-            Init a new list for topics -> trends
-            For each timestamp between $to_timestamp and $from_timestamp
-                Retrieve $topics in Dict($timestamp,DATA)
-                Retrieve count of $topic by applying 'len' to timestamps of Dict($topic,timestamps)
-                Create a tuple containing ($topic, $count) -> trend
-                If $trends is empty then
-                    Add a $trend to $trends
-                If $trend.count > first_out($trends)
-                    Enqueue $trend to $trends
-                Else
-                    Stack up $trend to $trends
-            Return $trends
+        1. For each timestamp between from and to
+        2. Get indice from inverted index timestamp
+        3. If there is a post then
+            4.  Extract topics from post
+            5.  Count total topic in all post for each topic
+            6.  Create trends by using topic and its count
+            7.  Sort trends primarily by DESC count then ASC alphabetically
+        8. Return trends
 
         Args:
             from_timestamp (int): start trends period
             to_timestamp (int): end trends period
 
         Returns:
-            List[str]: _description_
+            List[str]: topics
         """
+        # NOTE no exception, permutation to fix
         if from_timestamp > to_timestamp:
             from_timestamp, to_timestamp = to_timestamp, from_timestamp
         logger.info(
@@ -205,6 +187,7 @@ class YodelrV1(Yodelr):
         trends = []
         topics = dict()
         logger.debug("> 1st pass topics=%s", topics)
+        # TODO v3 - implement binary search for closest timestamp
         for ts in range(from_timestamp, to_timestamp + 1):
             ind = self._inverted_composite_index.get(str(ts), None)
             if ind is not None and self._posts[ind] is not None:
@@ -286,7 +269,8 @@ class YodelrV1(Yodelr):
             post_text = post_text.lower()
         topics = []
         for match in re.finditer(cls.REGEX_TOPIC, post_text):
-            topic = match.group(0)  # we keep hashtag
+            # NOTE we keep hashtag
+            topic = match.group(0)
             if topic not in topics:
                 topics.append(topic)
         logger.debug("Topics found: %s", topics)

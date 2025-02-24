@@ -13,7 +13,7 @@ from yodelr import Yodelr, YodelrError
 
 @pytest.fixture
 def yodelr() -> Yodelr:
-    return v1.YodelrV1(fast_write=True)
+    return v1.YodelrV1()
 
 
 def test_add_post_from_unknown_user(yodelr: Yodelr, user_name: str):
