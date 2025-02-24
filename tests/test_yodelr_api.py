@@ -108,12 +108,32 @@ def test_delete_user_with_single_post(
     user_name: str,
     sample_10_posts: list[str],
 ):
+    TS = 1
     yodelr.add_user("u1")
     yodelr.add_user("u2")
     yodelr.add_user(user_name)
-    yodelr.add_post(user_name, sample_10_posts[3], 1)
+    yodelr.add_post(user_name, sample_10_posts[3], TS)
     yodelr.delete_user(user_name)
-    assert not yodelr._is_user_in_system(user_name)
+    assert not yodelr._is_user_in_system(
+        user_name
+    ) and not yodelr._test_check_post_in_system(TS)
+
+
+def test_delete_user_with_multi_post(
+    yodelr: Yodelr,
+    user_name: str,
+    sample_10_posts: list[str],
+):
+    yodelr.add_user("u1")
+    yodelr.add_user(user_name)
+    for i in range(1, 4):
+        yodelr.add_post(user_name, sample_10_posts[i], i)
+    yodelr.delete_user(user_name)
+    assert not yodelr._is_user_in_system(user_name) and not (
+        yodelr._test_check_post_in_system(1)
+        or yodelr._test_check_post_in_system(2)
+        or yodelr._test_check_post_in_system(3)
+    )
 
 
 def test_get_posts_size_0_for_user(

@@ -24,7 +24,7 @@ clean:
 	$(BUILDER) rm -f $(image):$(tag)
 	
 localtest:
-	clear && pytest
+	clear && pytest --color=yes tests/test_yodelr_api.py
 
 ltest: localtest
 

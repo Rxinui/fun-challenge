@@ -283,6 +283,16 @@ class YodelrV1(Yodelr):
         """
         return self.__timestamps_by_topic.keys()
 
+    def _test_check_post_in_system(self, timestamp: Timestamp) -> bool:
+        """[FOR TEST ONLY]
+
+        Returns:
+            list[Topic]: all topic
+        """
+        if not self.__data_by_timestamp.get(timestamp, False):
+            return False
+        return True
+
     @classmethod
     def _extract_topics(cls, post_text: str, case_sensitive=True) -> list[Topic]:
         """Extract all term starting with '#' matching $REGEX_TOPIC
