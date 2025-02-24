@@ -1,0 +1,25 @@
+#description: CI pipeline for Yodelr
+name: benchmark-tests
+on:
+  workflow_dispatch:
+jobs:
+  perftest:
+    runs-on: ["ubuntu-latest"]
+    strategy:
+      matrix:
+        words-in-corpus: [100, 1000, 10000, 100000]
+        version: ["v1", "v2", "${{ github.ref_name }}"]
+    env:
+      IMAGE: rxinui/yodelr
+      APP_ENV: ci
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.version }}
+
+      - name: Update APP_ENV for ci
+        run: sed -i -E "s/^(APP_ENV)=.*/\1=${{env.APP_ENV}}/" .env
+
+      - name: Test Yodelr
+        continue-on-error: true
+        run: make perftest-in-container tag=${{contains(github.ref_name,'/') && 'alpha' || github.ref_name }} psize=${{ matrix.words-in-corpus }}

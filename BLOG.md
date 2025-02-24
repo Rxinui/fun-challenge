@@ -6,14 +6,6 @@ EOF
 i change extract #topic to remove #duplicate from the #start
 EOF
 
-@Rxinui 2025-02-23T05:25:00+01:00
-I did it again but special #heap for #tuple for count-topic
-EOF
-
-@Rxinui 2025-02-23T05:24:38+01:00
-I create a #heap and its methods
-EOF
-
 @Rxinui 2025-02-22T15:01:36+01:00
 anyway, I'm very #happy that #getTrendingTopics is going smooth
 EOF
@@ -40,10 +32,6 @@ EOF
 
 @Rxinui 2025-02-22T02:16:15+01:00
 i get to use #queue and #stack together
-EOF
-
-@Rxinui 2025-02-22T01:10:39+01:00
-I hate myself for the confusion. #max #heap it is. Byebye #stack.
 EOF
 
 @Rxinui 2025-02-21T23:55:13+01:00

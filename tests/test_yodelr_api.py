@@ -37,7 +37,7 @@ def test_no_user(yodelr: Yodelr, user_name: str):
 
 def test_add_user(yodelr: Yodelr, user_name: str):
     yodelr.add_user(user_name)
-    assert user_name in yodelr._inverted_composite_index
+    assert yodelr._is_user_in_system(user_name)
 
 
 def test_add_same_user_multiple_times(yodelr: Yodelr, user_name: str):
@@ -49,7 +49,7 @@ def test_add_same_user_multiple_times(yodelr: Yodelr, user_name: str):
 
 def test_get_1_topic(yodelr: Yodelr):
     assert v1.YodelrV1._extract_topics("This is a #message, with a topic.") == [
-        "#message"
+        "message"
     ]
 
 
@@ -57,9 +57,9 @@ def test_get_3_topics(yodelr: Yodelr):
     assert v1.YodelrV1._extract_topics(
         "This has #message with #multiple a #topic."
     ) == [
-        "#message",
-        "#multiple",
-        "#topic",
+        "message",
+        "multiple",
+        "topic",
     ]
 
 
@@ -80,12 +80,15 @@ def test_add_post(
 def test_add_post_over_chars_limit(
     yodelr: Yodelr,
     user_name: str,
+    sample_10_posts: list[str],
 ):
     post_text_140 = "dream #big work #hard stay focused. Every #small step counts. Believe in yourself embrace challenges and never give up. Success is a journey"
     post_text_22 = " with #medium worries."
     yodelr.add_user(user_name)
     yodelr.add_post(user_name, post_text_140 + post_text_22, 1)
-    assert post_text_140 in yodelr._posts
+    assert yodelr._test_is_post_in_system(
+        user_name, post_text_140
+    ) and not yodelr._test_is_post_in_system(user_name, post_text_140 + post_text_22)
 
 
 def test_delete_user_with_zero_post(
@@ -210,7 +213,7 @@ def test_get_posts_size_1_for_topic(
     yodelr.add_user(user_name)
     yodelr.add_post(user_name, sample_10_posts_and_topics[4][POST], 1)
     assert yodelr.get_posts_for_topic(
-        sample_10_posts_and_topics[4][TOPICS][FIRST_TOPIC].lstrip("#")
+        sample_10_posts_and_topics[4][TOPICS][FIRST_TOPIC]
     ) == [sample_10_posts_and_topics[4][POST]]
 
 
