@@ -14,10 +14,11 @@ This challenge is solved using Python3.12 with built-in modules only.
 The structure of this repository lists the following
 
 ```
-- yodelr.py: Yodelr model file
-- tests/**/: tests files and datasets samples
-- docs/: directory containing complementary docs and figures if any
-- .github/**/: CI/CD workflows
+- yodelr.py:    Yodelr model file
+- v1.py:        Implementation of Yodelr
+- tests/:       Tests files and datasets samples
+- docs/:        Docs and figures
+- .github/**/:  Workflows for CI/CD
 ```
 
 ## Analysis, Strategy and Methodology
@@ -29,9 +30,9 @@ The Yodelr system induces 2 big challenges:
 1. How to structure the data to implement getters in reasonable time
 2. How to minimise the time-space complexity of `getTrendingTopic`
 
-On that basis, it seems to be interesting to start with a `v1` to:
+On that basis, it seems interesting to start with a `v1` to:
 
-- Speed up the implementation of the Yodelr API to identify potential issues and edge cases
+- Speed up the implementation of the Yodelr API in order to identify potential issues and edge cases
 - Populate testings with the first prototype. Adapt from `v1` to `v2` if necessary
 
 ### Strategy - Roadmap
@@ -58,7 +59,7 @@ By the deadline, if my schedule allows it, create a `v3` which uses advanced alg
 
 **NO AGILE METHODS. THAT IS SUCH A BAD IDEA (here)**
 
-- For such small use case, the most important is to **remain organised** and set a clear direction (and stick to it).
+- For such small use case, the most important is to [**remain organised** and set a clear direction](https://github.com/Rxinui/fun-challenge/issues?q=is%3Aissue%20state%3Aclosed) (and stick to it).
 - **Priority is given to tests**, to finish the Mission (`v1`). What is the purpose of having the most optimal solution (`v2`, maybe `v3`) if the mission is not achieved? :nerd_face:
 - GitHub Release from tags `v1`, `v2` and potentially `v3`, through CI/CD
 - Trunk-Based Development (TBD) as git flow is best-suited here for a single-engineer fan of CI.
@@ -68,20 +69,21 @@ By the deadline, if my schedule allows it, create a `v3` which uses advanced alg
 To facilitate the setup and ensure compliance accross machines, a `Dockerfile` is present as evidence and utility to build-and-run the challenge in a clean environment.
 In addition, a `Makefile` is provided to initiate manual and automated testing
 
-### Pre-requisites
+### Option 1 - Run tests and perftests on the CI (recommended)
 
-#### Option 1. All-in-one container (recommended)
+1. Go to [CI workflow](https://github.com/Rxinui/fun-challenge/actions/workflows/ci.yaml) > `Run workflow` > Click on run
+2. If workflow is a success, [a new workflow for performance tests will be triggered](https://github.com/Rxinui/fun-challenge/actions/workflows/perftest.yaml)
 
-- Container Runtime: `podman >=5.4.0`
+### Option 2 - Build and run unit tests
 
-### Option 1 - Build and run unit tests
+**Pre-requisites**: `podman >=5.4.0` or `docker >=27.5.1`
 
 ```shell
 make unittest-in-container
 make perftest-in-container # if you want to run perf tests
 ```
 
-### Option 2 - Build and run main.py
+### Option 3 - Build and run main.py
 
 Add your own manual instructions within `main.py` and execute the script
 
@@ -89,14 +91,11 @@ Add your own manual instructions within `main.py` and execute the script
 make run-main # Run main.py within a container
 ```
 
-### Option 3 - Run tests and perftests on the CI (recommended)
-
-1. Go to [CI workflow](https://github.com/Rxinui/fun-challenge/actions/workflows/ci.yaml) > `Run workflow` > Click on run
-2. If workflow is a success, [a new workflow for performance tests will be triggered](https://github.com/Rxinui/fun-challenge/actions/workflows/perftest.yaml)
-
-## Results
+## Results - benchmark
 
 ### `v1` data structure
+
+[Source code v1](https://github.com/Rxinui/fun-challenge/releases/tag/v1)
 
 ![v1](./docs/v1.png)
 
@@ -116,12 +115,52 @@ However, this _stupid and simple_ idea complexify the `getTrendingTopics` in exc
 
 ### `v2` data structure
 
+[Source code v2](https://github.com/Rxinui/fun-challenge/releases/tag/v2)
+
 ![v2](./docs/v2.png)
 
 `v2` uses the same concept as time-serie database (ie. Prometheus), since it is driven by timestamp, having a list of data and an invertedindex allows to balance performance with getters and setters.
+
 - Pros: Quick access from the inverted index -> list of data
 - Cons: Processing of extract topics at every call of `getTrendingTopics`. Since, the limitation of a post is 140 chars, it is not that much of an inconvenience.
 
-### Compare `v1` and `v2`
+### Benchmark `v1` and `v2`
 
+[See v1 run here](https://github.com/Rxinui/fun-challenge/actions/runs/13494439099/job/37698491382)
 
+| v1                | w=100    | w=1000    | w=10000   | w=1000000  |
+| ----------------- | -------- | --------- | --------- | ---------- |
+| deleteUser        | 0.011106 | 0.011120  | 0.011937  | 0.017365   |
+| addPost           | 0.001842 | 0.047871  | 2.804578  | 270.657196 |
+| getPostsForUser   | 0.001247 | 0.008426  | 0.202649  | :x:        |
+| getPostsForTopic  | 0.002455 | 0.012315  | 0.025201  | :x:        |
+| getTrendingTopics | 0.202969 | 16.853485 | 81.631433 | :x:        |
+
+[See v2 run here](https://github.com/Rxinui/fun-challenge/actions/runs/13494439099/job/37698491382)
+
+| v2                | w=100    | w=1000   | w=10000   | w=1000000  |
+| ----------------- | -------- | -------- | --------- | ---------- |
+| deleteUser        | 0.011956 | 0.011335 | 0.013506  | 0.016078   |
+| addPost           | 0.001181 | 0.024612 | 0.915521  | 77.096798  |
+| getPostsForUser   | 0.000861 | 0.002057 | 0.011247  | 0.491179   |
+| getPostsForTopic  | 0.002468 | 0.011895 | 0.020240  | 0.049816   |
+| getTrendingTopics | 0.090285 | 5.176679 | 33.581007 | 614.128843 |
+
+**Summary `v1` vs `v2`**
+
+|                   | v1                 | v2                 |
+| ----------------- | ------------------ | ------------------ |
+| deleteUser        | :white_check_mark: | :white_check_mark: |
+| addPost           | :turtle:           | :rabbit2:          |
+| getPostsForUser   | :turtle:           | :rabbit2:          |
+| getPostsForTopic  | :white_check_mark: | :white_check_mark: |
+| getTrendingTopics | :snail:            | :dromedary_camel:  |
+
+`v2` has a better implementation and a better data structure choice than `v1`. As shown a XLarge size (w=100000), only `v2` is capable of processing methods. Some optimisation can be done, in term of algorithms to enhance `v2` performances.
+
+`v2` can be turned into a `v3` by:
+
+- Implementing a better search of timestamp between `from_timestamp` and `to_timestamp` using `binary search`
+- Shift values of `posts` to the left to erase `None` which marks a deleted post
+
+**NOTE: to run your benchmark, [click on Run workflow](https://github.com/Rxinui/fun-challenge/actions/workflows/benchmark.yaml)**
