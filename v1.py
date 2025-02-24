@@ -42,14 +42,10 @@ class YodelrV1(Yodelr):
                 $ID_TOPICS:     Dict[$topic, int]      # key=$topic, value=occurence
         """
         super().__init__()
-        self.__WrapperOnAdd = LIFOWrapper if fast_write else FIFOWrapper
-        self.__WrapperOnGet = FIFOWrapper if fast_write else LIFOWrapper
-        self.__data_by_timestamp: dict[Timestamp, dict[str, Any]] = dict()
-        self.__timestamps_by_user: dict[User, list[Timestamp]] = dict()
-        # Because of the way I represent timestamps by topic
-        # WrapperOnAdd should be LIFOWrapper as addPost is costly because
-        # of the indexation of Topic
-        self.__timestamps_by_topic: dict[Topic, list[Timestamp]] = dict()
+        self._posts: list[Post] = []
+        self._inverted_composite_index: dict[
+            Topic | Timestamp | User, List[int] | int
+        ] = dict()
 
     def add_user(self, user_name: str) -> None:
         """Add user to the system.
@@ -60,7 +56,7 @@ class YodelrV1(Yodelr):
             user_name (str): user_name
         """
         logger.info("Adding user %s ...", user_name)
-        self.__timestamps_by_user.setdefault(user_name, [])
+        self._inverted_composite_index[user_name] = []
         logger.debug("updated Yodelr: %s", self)
 
     def add_post(self, user_name: str, post_text: str, timestamp: int) -> None:
@@ -87,30 +83,15 @@ class YodelrV1(Yodelr):
         logger.info("Add post...")
         if not self._is_user_in_system(user_name):
             raise YodelrError(YodelrError.UNKNOWN_USER)
-        if len(post_text) > self.MAX_POST_CHARS:
-            logger.debug(f"> truncate post_text to {self.MAX_POST_CHARS} chars")
-            post_text = post_text[: self.MAX_POST_CHARS]
-        logger.debug(
-            "> associate timestamp '%s' of the post to user '%s'", timestamp, user_name
-        )
+        ind = len(self._posts)
+        post_text = post_text[: self.MAX_POST_CHARS]
         topics = self._extract_topics(post_text)
-        # Indexation of User->Timestamps
-        self.__WrapperOnAdd.add(self.__timestamps_by_user[user_name], timestamp)
-        # Indexation of Timestamp->{$post, $topics, $user}
-        self.__data_by_timestamp[timestamp] = {
-            self.ID_POST: post_text,
-            self.ID_TOPICS: topics,
-            self.ID_USER: user_name,
-        }
-        # Indexation of Topic->Timestamps
+        self._posts.append(post_text)
+        self._inverted_composite_index[str(timestamp)] = ind
+        self._inverted_composite_index[user_name].append(ind)
         for topic in topics:
-            topic_timestamps = self.__timestamps_by_topic.setdefault(topic, [])
-            # Keep duplicate timestamp away
-            if len(topic_timestamps) == 0 or (
-                len(topic_timestamps) > 0
-                and self.__WrapperOnAdd.first_out(topic_timestamps) != timestamp
-            ):
-                self.__WrapperOnAdd.add(topic_timestamps, timestamp)
+            if ind not in self._inverted_composite_index.get(topic, []):
+                self._inverted_composite_index.setdefault(topic, []).append(ind)
         logger.debug("> updated Yodelr: %s", self)
 
     def delete_user(self, user_name: str) -> None:
@@ -129,14 +110,14 @@ class YodelrV1(Yodelr):
             user_name (str): user
         """
         logger.info("Deleting user '%s'...", user_name)
-        timestamps = self.__timestamps_by_user.get(user_name, None)
-        if timestamps is None:
+        user_inds = self._inverted_composite_index.get(user_name, None)
+        if user_inds is None:
             raise YodelrError(YodelrError.UNKNOWN_USER)
-        logger.debug("> timestamps from user '%s': %s", user_name, timestamps)
-        logger.debug("> delete user '%s' from Dict(user,timestamps)", user_name)
-        del self.__timestamps_by_user[user_name]
-        for timestamp in timestamps:
-            del self.__data_by_timestamp[timestamp]
+        logger.debug("> indices of user '%s': %s", user_name, user_inds)
+        logger.debug("> delete user '%s' from inverted composite index", user_name)
+        del self._inverted_composite_index[user_name]
+        for ind in user_inds:
+            self._posts[ind] = None  # mark as removed
 
     def get_posts_for_user(self, user_name: str) -> List[str]:
         """Get list of post from a user
@@ -157,14 +138,12 @@ class YodelrV1(Yodelr):
         """
         logger.info("Get posts for user '%s'...", user_name)
         posts: list = []
-        timestamps = self.__timestamps_by_user.get(user_name, None)
-        logger.debug("> timestamps=%s", timestamps)
-        if timestamps is None:
+        user_inds = self._inverted_composite_index.get(user_name, None)
+        if user_inds is None:
             raise YodelrError(YodelrError.UNKNOWN_USER)
-        for timestamp in timestamps:
-            post = self.__data_by_timestamp[timestamp][self.ID_POST]
-            self.__WrapperOnGet.add(posts, post)
-            logger.debug("> post '%s' added to posts=%s", post, posts)
+        logger.debug("> indices of user '%s': %s", user_name, user_inds)
+        for ind in user_inds:
+            FIFOWrapper.add(posts, self._posts[ind])  # latest at ind=0
         logger.debug("> updated Yodelr: %s", self)
         return posts
 
@@ -188,11 +167,10 @@ class YodelrV1(Yodelr):
         """
         logging.info("Get posts for topic...")
         posts = []
-        timestamps = self.__timestamps_by_topic.get(topic, [])
-        logger.debug("> timestamps of topic '%s': %s", topic, timestamps)
-        for timestamp in timestamps:
-            post = self.__data_by_timestamp[timestamp][self.ID_POST]
-            self.__WrapperOnGet.add(posts, post)
+        topic_inds = self._inverted_composite_index.get(f"#{topic}", [])
+        logger.debug("> indices of topic '%s': %s", topic, topic_inds)
+        for ind in topic_inds:
+            FIFOWrapper.add(posts, self._posts[ind])
         return posts
 
     def get_trending_topics(self, from_timestamp: int, to_timestamp: int) -> List[str]:
@@ -256,7 +234,7 @@ class YodelrV1(Yodelr):
         Returns:
             bool: _description_
         """
-        return user in self.__timestamps_by_user
+        return user in self._inverted_composite_index
 
     def _test_is_post_in_system(self, user_name: User, post_text: str) -> bool:
         """[FOR TEST ONLY]
@@ -267,12 +245,10 @@ class YodelrV1(Yodelr):
         Returns:
             bool: _description_
         """
-        timestamps = self.__timestamps_by_user[user_name]
-        cond1 = post_text in [
-            self.__data_by_timestamp[ts][self.ID_POST] for ts in timestamps
-        ]
-        cond2 = user_name in self.__timestamps_by_user
-        return cond1 and cond2
+        return (
+            self._inverted_composite_index.get(user_name, False)
+            and post_text in self._posts
+        )
 
     def _test_get_all_topics(self) -> list[Topic]:
         """[FOR TEST ONLY]
@@ -288,9 +264,7 @@ class YodelrV1(Yodelr):
         Returns:
             list[Topic]: all topic
         """
-        if not self.__data_by_timestamp.get(timestamp, False):
-            return False
-        return True
+        return self._inverted_composite_index.get(timestamp, False)
 
     @classmethod
     def _extract_topics(cls, post_text: str, case_sensitive=True) -> list[Topic]:
@@ -309,15 +283,13 @@ class YodelrV1(Yodelr):
             post_text = post_text.lower()
         topics = []
         for match in re.finditer(cls.REGEX_TOPIC, post_text):
-            topic = match.group(0)[1:]  # remove hashtag
+            topic = match.group(0)  # we keep hashtag
             if topic not in topics:
                 topics.append(topic)
         logger.debug("Topics found: %s", topics)
         return topics
 
     def __repr__(self) -> str:
-        return f"""
-Dict(topic,timestamp): {self.__timestamps_by_topic}
-Dict(user,timestamp): {self.__timestamps_by_user}
-Dict(timestamp,DATA): {self.__data_by_timestamp}
+        return f"""Inverted Composite Index: {self._inverted_composite_index}
+Total posts: {len(self._posts)}
 """
