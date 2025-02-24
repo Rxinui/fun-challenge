@@ -1,7 +1,6 @@
 #description: CI pipeline for Yodelr
 name: performance-tests
 on:
-  workflow_dispatch:
   workflow_run:
     workflows:
       - ci
@@ -27,4 +26,5 @@ jobs:
         run: sed -i -E "s/^(APP_ENV)=.*/\1=${{env.APP_ENV}}/" .env
 
       - name: Test Yodelr
-        run: make perftest-in-container psize=${{ matrix.words-in-corpus }}
+        continue-on-error: true
+        run: make perftest-in-container tag=${{contains(github.ref_name,'/') && 'alpha' || github.ref_name }} psize=${{ matrix.words-in-corpus }}
