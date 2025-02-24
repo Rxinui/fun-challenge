@@ -260,45 +260,45 @@ def test_get_trending_topics_oldest_to_latest(
     ]
 
 
-# def test_get_trending_topics_in_between_ts_count_focus(
-#     yodelr: Yodelr, user_name: str, sample_10_posts: list[tuple[str, list]]
-# ):
-#     TS_1 = 1
-#     TS_2 = 6
-#     yodelr.add_user(user_name)
-#     for i in range(len(sample_10_posts)):
-#         yodelr.add_post(user_name, sample_10_posts[i], i)
-#     assert yodelr.get_trending_topics(TS_1, TS_2) == ["post", "test", "topic"]
+def test_get_trending_topics_in_between_ts_count_focus(
+    yodelr: Yodelr, user_name: str, sample_10_posts: list[tuple[str, list]]
+):
+    TS_1 = 1
+    TS_2 = 6
+    yodelr.add_user(user_name)
+    for i in range(len(sample_10_posts)):
+        yodelr.add_post(user_name, sample_10_posts[i], i)
+    assert yodelr.get_trending_topics(TS_1, TS_2) == ["post", "test", "topic"]
 
 
-# def test_get_trending_topics_in_between_ts_alphabetic_focus(
-#     yodelr: Yodelr, user_name: str, sample_10_posts: list[tuple[str, list]]
-# ):
-#     TS_1 = 7
-#     TS_2 = 9
-#     yodelr.add_user(user_name)
-#     for i in range(len(sample_10_posts)):
-#         yodelr.add_post(user_name, sample_10_posts[i], i)
-#     assert yodelr.get_trending_topics(TS_1, TS_2) == ["full", "topic"]
+def test_get_trending_topics_in_between_ts_alphabetic_focus(
+    yodelr: Yodelr, user_name: str, sample_10_posts: list[tuple[str, list]]
+):
+    TS_1 = 7
+    TS_2 = 9
+    yodelr.add_user(user_name)
+    for i in range(len(sample_10_posts)):
+        yodelr.add_post(user_name, sample_10_posts[i], i)
+    assert yodelr.get_trending_topics(TS_1, TS_2) == ["full", "topic"]
 
 
-# def test_get_trending_topics_in_timespan_with_one_topic(
-#     yodelr: Yodelr, user_name: str, sample_10_posts: list[tuple[str, list]]
-# ):
-#     TS_1 = 3
-#     TS_2 = 4
-#     yodelr.add_user(user_name)
-#     for i in range(len(sample_10_posts)):
-#         yodelr.add_post(user_name, sample_10_posts[i], i)
-#     assert yodelr.get_trending_topics(TS_1, TS_2) == ["post"]
+def test_get_trending_topics_in_timespan_with_one_topic(
+    yodelr: Yodelr, user_name: str, sample_10_posts: list[tuple[str, list]]
+):
+    TS_1 = 3
+    TS_2 = 4
+    yodelr.add_user(user_name)
+    for i in range(len(sample_10_posts)):
+        yodelr.add_post(user_name, sample_10_posts[i], i)
+    assert yodelr.get_trending_topics(TS_1, TS_2) == ["post"]
 
 
-# def test_get_trending_topics_in_timespan_without_topic(
-#     yodelr: Yodelr, user_name: str, sample_10_posts: list[tuple[str, list]]
-# ):
-#     TS_1 = 9
-#     TS_2 = 9
-#     yodelr.add_user(user_name)
-#     for i in range(len(sample_10_posts)):
-#         yodelr.add_post(user_name, sample_10_posts[i], i)
-#     assert yodelr.get_trending_topics(TS_1, TS_2) == []
+def test_get_trending_topics_in_timespan_without_topic(
+    yodelr: Yodelr, user_name: str, sample_10_posts: list[tuple[str, list]]
+):
+    TS_1 = 9
+    TS_2 = 9
+    yodelr.add_user(user_name)
+    for i in range(len(sample_10_posts)):
+        yodelr.add_post(user_name, sample_10_posts[i], i)
+    assert yodelr.get_trending_topics(TS_1, TS_2) == []

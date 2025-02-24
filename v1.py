@@ -197,29 +197,30 @@ class YodelrV1(Yodelr):
         Returns:
             List[str]: _description_
         """
+        if from_timestamp > to_timestamp:
+            from_timestamp, to_timestamp = to_timestamp, from_timestamp
         logger.info(
             "Get trending topics from=%s to=%s...", from_timestamp, to_timestamp
         )
-        # Phase 1: regroup all topics within the timespan
-        topics = []
-        for ts in range(from_timestamp, to_timestamp + 1):
-            if ts not in self.__data_by_timestamp:
-                continue
-            topics.extend(self.__data_by_timestamp[ts][self.ID_TOPICS])
-        logger.debug("> 1st pass topics=%s", topics)
-        # Phase 2: counting number of topics
-        topics_counter = dict()
-        for topic in topics:
-            if topic not in topics_counter:
-                topics_counter[topic] = 1
-            else:
-                topics_counter[topic] += 1
-        logger.debug("> 2nd pass counter=%s", topics)
-        # Phase 3: creating trend based on topic its count
         trends = []
-        for topic, count in topics_counter.items():
-            LIFOWrapper.add(trends, (count, topic))
+        topics = dict()
+        logger.debug("> 1st pass topics=%s", topics)
+        for ts in range(from_timestamp, to_timestamp + 1):
+            ind = self._inverted_composite_index.get(str(ts), None)
+            if ind is not None and self._posts[ind] is not None:
+                tps = self._extract_topics(self._posts[ind])
+                for topic in tps:
+                    topic = topic.lstrip("#")
+                    if topic not in topics:
+                        topics[topic] = 1
+                    else:
+                        topics[topic] += 1
+        logger.debug("> 2nd pass topics with count=%s", topics)
+        trends = []
+        for topic, count in topics.items():
+            trends.append((count, topic))
             logger.debug(">> trends=%s", trends)
+        # NOTE sorting: desc on count, alpha asc on topic
         trends.sort(key=lambda tup: (-tup[0], tup[1]))
         trends = [trend[1] for trend in trends]
         logger.debug("> 3rd pass trends=%s", trends)
@@ -256,7 +257,9 @@ class YodelrV1(Yodelr):
         Returns:
             list[Topic]: all topic
         """
-        return self.__timestamps_by_topic.keys()
+        return list(
+            filter(lambda k: k.startswith("#"), self._inverted_composite_index.keys())
+        )
 
     def _test_check_post_in_system(self, timestamp: Timestamp) -> bool:
         """[FOR TEST ONLY]
